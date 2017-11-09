@@ -59,3 +59,39 @@ pub fn parse_header<R: Read + Sized>(r: &mut R) -> Result<Header> {
         doc_type_read_version: doc_type_read_version,
     })
 }
+
+/// Represents MKV seek information data.
+pub type SeekInfo = Vec<SeekEntry>;
+
+/// Represents an MKV seek entry to an element.
+pub struct SeekEntry {
+    pub seek_id: Vec<u8>,
+    pub seek_position: u64,
+}
+
+/// Read and parse MKV seek information.
+pub fn parse_seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
+    let mut entries = Vec::new();
+    let mut count = 0 as usize;
+
+    let (seek_head, _) = r.read_ebml_element_info()?;
+
+    while count < seek_head.size() {
+        // SeekHead element
+        let (_, c) = r.read_ebml_element_info()?;
+        count += c;
+
+        let (seek_id, c) = r.read_ebml_element()?;
+        count += c;
+
+        let (seek_position, c) = r.read_ebml_element()?;
+        count += c;
+
+        entries.push(SeekEntry {
+            seek_id: seek_id.data_binary(),
+            seek_position: seek_position.data_u64(),
+        });
+    }
+
+    Ok(entries)
+}
