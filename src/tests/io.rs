@@ -12,6 +12,13 @@ fn parse_header() {
         0x00, 0x00, 0x42, 0x87, 0x81, 0x01, 0x42, 0x85, 0x81, 0x01,
     ]);
 
-    io::read_header(&mut data);
-    assert!(false);
+    let header = io::parse_header(&mut data).unwrap();
+
+    assert_eq!(header.ebml_version, 1);
+    assert_eq!(header.ebml_read_version, 1);
+    assert_eq!(header.ebml_max_id_length, 4);
+    assert_eq!(header.ebml_max_size_length, 8);
+    assert_eq!(header.doc_type.as_str(), "webm");
+    assert_eq!(header.doc_type_version, 1);
+    assert_eq!(header.doc_type_read_version, 1);
 }

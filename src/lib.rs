@@ -9,6 +9,9 @@ extern crate ebml;
 
 mod error;
 
+#[allow(dead_code)]
+mod elements;
+
 pub mod io;
 
 use std::io::Read;
@@ -22,7 +25,6 @@ impl Video {
     /// Open a Matroska video from some kind of a reader, and retreive basic information about the
     /// media.
     pub fn open<R: Read + Sized>(r: &mut R) -> Result<Video> {
-        io::read_header(r)?;
         Ok(Video {})
     }
 }
