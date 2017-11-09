@@ -1,4 +1,4 @@
-/// This module contains the functionality to allow reading/writing of MKV video.
+/// This module contains all the parsing functionality.
 
 use std::io::Read;
 
@@ -20,7 +20,7 @@ pub struct Header {
 }
 
 /// Read and parse an EBML header from an input source.
-pub fn parse_header<R: Read + Sized>(r: &mut R) -> Result<Header> {
+pub fn header<R: Read + Sized>(r: &mut R) -> Result<Header> {
     let mut count = 0 as usize;
     let (elem, _) = r.read_ebml_element_info()?;
 
@@ -70,7 +70,7 @@ pub struct SeekEntry {
 }
 
 /// Read and parse MKV seek information.
-pub fn parse_seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
+pub fn seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
     let mut entries = Vec::new();
     let mut count = 0 as usize;
 

@@ -1,4 +1,4 @@
-/// I/O Tests.
+/// Parsing tests
 
 use std::io::Cursor;
 
@@ -12,7 +12,7 @@ fn parse_header() {
         0x00, 0x00, 0x42, 0x87, 0x81, 0x01, 0x42, 0x85, 0x81, 0x01,
     ]);
 
-    let header = io::parse_header(&mut data).unwrap();
+    let header = io::parse::header(&mut data).unwrap();
 
     assert_eq!(header.ebml_version, 1);
     assert_eq!(header.ebml_read_version, 1);
@@ -33,7 +33,7 @@ fn parse_seek_info() {
         0xac, 0x82, 0x0d, 0x41,
     ]);
 
-    let mut seek = io::parse_seek_info(&mut data).unwrap().into_iter();
+    let mut seek = io::parse::seek_info(&mut data).unwrap().into_iter();
 
     let entry = seek.next().unwrap();
     assert_eq!(entry.seek_id, vec![0x15, 0x49, 0xa9, 0x66]);
