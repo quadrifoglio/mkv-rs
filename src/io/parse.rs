@@ -95,3 +95,80 @@ pub fn seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
 
     Ok(entries)
 }
+
+/// Contains information about an MKV segment.
+pub struct SegmentInfo {
+    pub uid: Vec<u8>,
+    pub filename: String,
+    pub prev_uid: Vec<u8>,
+    pub prev_filename: String,
+    pub next_uid: Vec<u8>,
+    pub next_filename: String,
+    pub family: Vec<u8>,
+    pub timecode_scale: u64,
+    pub duration: f32,
+    pub date_utc: i64,
+    pub title: String,
+    pub muxing_app: String,
+    pub writing_app: String
+}
+
+/// Read and parse MKV segment information.
+pub fn segment_info<R: Read + Sized>(r: &mut R) -> Result<SegmentInfo> {
+    let mut count = 0 as usize;
+
+    let mut uid = Vec::new();
+    let mut filename = String::new();
+    let mut prev_uid = Vec::new();
+    let mut prev_filename = String::new();
+    let mut next_uid = Vec::new();
+    let mut next_filename = String::new();
+    let mut family = Vec::new();
+    let mut timecode_scale = 0 as u64;
+    let mut duration = 0.0 as f32;
+    let mut date_utc = 0 as i64;
+    let mut title = String::new();
+    let mut muxing_app = String::new();
+    let mut writing_app = String::new();
+
+    let (segment_info, _) = r.read_ebml_element_info()?;
+
+    while count < segment_info.size() {
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            elements::SEGMENT_UID => uid = elem.data_binary(),
+            elements::SEGMENT_FILENAME => filename = elem.data_utf8()?,
+            elements::PREV_UID => prev_uid = elem.data_binary(),
+            elements::PREV_FILENAME => prev_filename = elem.data_utf8()?,
+            elements::NEXT_UID => next_uid = elem.data_binary(),
+            elements::NEXT_FILENAME => next_filename = elem.data_utf8()?,
+            elements::SEGMENT_FAMILY => family = elem.data_binary(),
+            elements::TIMECODE_SCALE => timecode_scale = elem.data_u64(),
+            elements::DURATION => duration = elem.data_f32(),
+            elements::DATE_UTC => date_utc = elem.data_i64(),
+            elements::TITLE => title = elem.data_utf8()?,
+            elements::MUXING_APP => muxing_app = elem.data_utf8()?,
+            elements::WRITING_APP => writing_app = elem.data_utf8()?,
+
+            _ => {},
+        };
+    }
+
+    Ok(SegmentInfo {
+        uid: uid,
+        filename: filename,
+        prev_uid: prev_uid,
+        prev_filename: prev_filename,
+        next_uid: next_uid,
+        next_filename: next_filename,
+        family: family,
+        timecode_scale: timecode_scale,
+        duration: duration,
+        date_utc: date_utc,
+        title: title,
+        muxing_app: muxing_app,
+        writing_app: writing_app
+    })
+}
