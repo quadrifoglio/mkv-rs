@@ -13,6 +13,7 @@ mod error;
 mod elements;
 
 pub mod io;
+pub mod structures;
 
 use std::io::Read;
 
