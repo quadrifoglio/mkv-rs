@@ -6,7 +6,7 @@ use ebml::io::ReadEbml;
 
 use elements;
 use error::Result;
-use structures::{Header, SeekInfo, SeekEntry, SegmentInfo};
+use structures::{Header, SeekInfo, SeekEntry, SegmentInfo, TrackInfo, Track};
 
 /// Read and parse an EBML header from an input source.
 pub fn header<R: Read + Sized>(r: &mut R) -> Result<Header> {
@@ -93,4 +93,54 @@ pub fn segment_info<R: Read + Sized>(r: &mut R) -> Result<SegmentInfo> {
     }
 
     Ok(seg_info)
+}
+
+/// Read and parse track information.
+pub fn track_info<R: Read + Sized>(r: &mut R) -> Result<TrackInfo> {
+    let mut count = 0 as usize;
+    let mut tracks = Vec::new();
+
+    let (seek_info, _) = r.read_ebml_element_info()?;
+
+    while count < seek_info.size() {
+        let mut track = Track::default();
+
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            elements::TRACK_NUMBER => track.number = elem.data_u64(),
+            elements::TRACK_UID => track.uid = elem.data_binary(),
+            elements::TRACK_TYPE => track.track_type = elem.data_u64(),
+            elements::FLAG_ENABLED => track.flag_enabled = elem.data_u64(),
+            elements::FLAG_DEFAULT => track.flag_default = elem.data_u64(),
+            elements::FLAG_FORCED => track.flag_forced = elem.data_u64(),
+            elements::FLAG_LACING => track.flag_lacing = elem.data_u64(),
+            elements::MIN_CACHE => track.min_cache = elem.data_u64(),
+            elements::MAX_CACHE => track.max_cache = elem.data_u64(),
+            elements::DEFAULT_DURATION => track.default_duration = elem.data_u64(),
+            elements::DEFAULT_DECODED_FIELD_DURATION => track.default_decoded_field_duration = elem.data_u64(),
+            elements::TRACK_OFFSET => track.track_offset = elem.data_i64(),
+            elements::MAX_BLOCK_ADDITION_ID => track.max_block_addition_id = elem.data_u64(),
+            elements::NAME => track.name = elem.data_utf8()?,
+            elements::LANGUAGE => track.language = elem.data_utf8()?,
+            elements::CODEC_ID => track.codec_id = elem.data_utf8()?,
+            elements::CODEC_PRIVATE => track.codec_private = elem.data_binary(),
+            elements::CODEC_NAME => track.codec_name = elem.data_utf8()?,
+            elements::ATTACHMENT_LINK => track.attachment_link = elem.data_u64(),
+            elements::CODEC_SETTINGS => track.codec_settings = elem.data_utf8()?,
+            elements::CODEC_INFO_URL => track.codec_info_url = elem.data_utf8()?,
+            elements::CODEC_DOWNLOAD_URL => track.codec_download_url = elem.data_utf8()?,
+            elements::CODEC_DECODE_ALL => track.codec_decode_all = elem.data_u64(),
+            elements::TRACK_OVERLAY => track.track_overlay = elem.data_u64(),
+            elements::CODEC_DELAY => track.codec_delay = elem.data_u64(),
+            elements::SEEK_PRE_ROLL => track.seek_pre_roll = elem.data_u64(),
+
+            _ => {},
+        }
+
+        tracks.push(track);
+    }
+
+    Ok(tracks)
 }

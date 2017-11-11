@@ -39,3 +39,37 @@ pub struct SegmentInfo {
     pub muxing_app: String,
     pub writing_app: String
 }
+
+/// List of tracks contained in an MKV file.
+pub type TrackInfo = Vec<Track>;
+
+/// Informations about a media track.
+#[derive(Default)]
+pub struct Track {
+    pub number: u64,
+    pub uid: Vec<u8>,
+    pub track_type: u64,
+    pub flag_enabled: u64,
+    pub flag_default: u64,
+    pub flag_forced: u64,
+    pub flag_lacing: u64,
+    pub min_cache: u64,
+    pub max_cache: u64,
+    pub default_duration: u64,
+    pub default_decoded_field_duration: u64,
+    pub track_offset: i64,
+    pub max_block_addition_id: u64,
+    pub name: String,
+    pub language: String,
+    pub codec_id: String,
+    pub codec_private: Vec<u8>,
+    pub codec_name: String,
+    pub attachment_link: u64,
+    pub codec_settings: String,
+    pub codec_info_url: String,
+    pub codec_download_url: String,
+    pub codec_decode_all: u64,
+    pub track_overlay: u64,
+    pub codec_delay: u64,
+    pub seek_pre_roll: u64,
+}
