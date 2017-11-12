@@ -6,7 +6,8 @@ use ebml::io::ReadEbml;
 
 use elements as el;
 use error::Result;
-use structures::{Header, SeekEntry, SeekInfo, SegmentInfo, Track, TrackInfo};
+use structures::{AudioTrack, Header, SeekEntry, SeekInfo, SegmentInfo, Track, TrackInfo,
+                 VideoTrack};
 
 /// Read and parse an EBML header from an input source.
 /// Returns the parsed object and the number of bytes that were read.
@@ -169,4 +170,71 @@ pub fn track<R: Read + Sized>(r: &mut R) -> Result<(Track, usize)> {
 
     count += c;
     Ok((track, count))
+}
+
+/// Read and parse track video information.
+/// Returns the parsed object and the number of bytes that were read.
+pub fn track_video<R: Read + Sized>(r: &mut R) -> Result<(VideoTrack, usize)> {
+    let mut count = 0 as usize;
+    let mut video = VideoTrack::default();
+
+    let (video_master, c) = r.read_ebml_element_info()?;
+
+    while count < video_master.size() {
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            el::FLAG_INTERLACED => video.flag_interlaced = elem.data_u64(),
+            el::FIELD_ORDER => video.field_order = elem.data_u64(),
+            el::STEREO_MODE => video.stereo_mode = elem.data_u64(),
+            el::ALPHA_MODE => video.alpha_mode = elem.data_u64(),
+            el::OLD_STEREO_MODE => video.old_stereo_mode = elem.data_u64(),
+            el::PIXEL_WIDTH => video.pixel_width = elem.data_u64(),
+            el::PIXEL_HEIGHT => video.pixel_height = elem.data_u64(),
+            el::PIXEL_CROP_BOTTOM => video.pixel_crop_bottom = elem.data_u64(),
+            el::PIXEL_CROP_TOP => video.pixel_crop_top = elem.data_u64(),
+            el::PIXEL_CROP_LEFT => video.pixel_crop_left = elem.data_u64(),
+            el::PIXEL_CROP_RIGHT => video.pixel_crop_right = elem.data_u64(),
+            el::DISPLAY_WIDTH => video.display_width = elem.data_u64(),
+            el::DISPLAY_HEIGHT => video.display_height = elem.data_u64(),
+            el::DISPLAY_UNIT => video.display_unit = elem.data_u64(),
+            el::ASPECT_RATIO_TYPE => video.aspect_ratio_type = elem.data_u64(),
+            el::COLOUR_SPACE => video.colour_space = elem.data_binary(),
+            el::GAMMA_VALUE => video.gamma_value = elem.data_f32(),
+            el::FRAME_RATE => video.frame_rate = elem.data_f32(),
+
+            _ => {}
+        };
+    }
+
+    count += c;
+    Ok((video, count))
+}
+
+/// Read and parse audio track information.
+/// Returns the parsed object and the number of bytes that were read.
+pub fn track_audio<R: Read + Sized>(r: &mut R) -> Result<(AudioTrack, usize)> {
+    let mut count = 0 as usize;
+    let mut audio = AudioTrack::default();
+
+    let (video_master, c) = r.read_ebml_element_info()?;
+
+    while count < video_master.size() {
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            el::SAMPLING_FREQUENCY => audio.sampling_frequency = elem.data_f32(),
+            el::OUTPUT_SAMPLING_FREQUENCY => audio.output_sampling_frequency = elem.data_f32(),
+            el::CHANNELS => audio.channels = elem.data_u64(),
+            el::CHANNEL_POSITIONS => audio.channel_positions = elem.data_binary(),
+            el::BIT_DEPTH => audio.bit_depth = elem.data_u64(),
+
+            _ => {}
+        };
+    }
+
+    count += c;
+    Ok((audio, count))
 }

@@ -74,3 +74,36 @@ pub struct Track {
     pub codec_delay: u64,
     pub seek_pre_roll: u64,
 }
+
+/// Informations about a video track.
+#[derive(Default)]
+pub struct VideoTrack {
+    pub flag_interlaced: u64,
+    pub field_order: u64,
+    pub stereo_mode: u64,
+    pub alpha_mode: u64,
+    pub old_stereo_mode: u64,
+    pub pixel_width: u64,
+    pub pixel_height: u64,
+    pub pixel_crop_bottom: u64,
+    pub pixel_crop_top: u64,
+    pub pixel_crop_left: u64,
+    pub pixel_crop_right: u64,
+    pub display_width: u64,
+    pub display_height: u64,
+    pub display_unit: u64,
+    pub aspect_ratio_type: u64,
+    pub colour_space: Vec<u8>,
+    pub gamma_value: f32,
+    pub frame_rate: f32,
+}
+
+/// Informations about an audio track.
+#[derive(Default)]
+pub struct AudioTrack {
+    pub sampling_frequency: f32,
+    pub output_sampling_frequency: f32,
+    pub channels: u64,
+    pub channel_positions: Vec<u8>,
+    pub bit_depth: u64,
+}
