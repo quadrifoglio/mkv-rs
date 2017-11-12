@@ -9,15 +9,16 @@ use error::Result;
 use structures::{Header, SeekEntry, SeekInfo, SegmentInfo, Track, TrackInfo};
 
 /// Read and parse an EBML header from an input source.
-pub fn header<R: Read + Sized>(r: &mut R) -> Result<Header> {
+/// Returns the parsed object and the number of bytes that were read.
+pub fn header<R: Read + Sized>(r: &mut R) -> Result<(Header, usize)> {
     let mut count = 0 as usize;
-    let (elem, _) = r.read_ebml_element_info()?;
+    let (elem, c) = r.read_ebml_element_info()?;
 
     let mut header = Header::default();
 
     while count < elem.size() {
-        let (elem, r) = r.read_ebml_element()?;
-        count += r;
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
 
         match elem.info().id() {
             el::EBML_VERSION => header.ebml_version = elem.data_u64(),
@@ -32,15 +33,17 @@ pub fn header<R: Read + Sized>(r: &mut R) -> Result<Header> {
         };
     }
 
-    Ok(header)
+    count += c;
+    Ok((header, count))
 }
 
 /// Read and parse MKV seek information.
-pub fn seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
+/// Returns the parsed object and the number of bytes that were read.
+pub fn seek_info<R: Read + Sized>(r: &mut R) -> Result<(SeekInfo, usize)> {
     let mut entries = Vec::new();
     let mut count = 0 as usize;
 
-    let (seek_head, _) = r.read_ebml_element_info()?;
+    let (seek_head, c) = r.read_ebml_element_info()?;
 
     while count < seek_head.size() {
         // SeekHead element
@@ -59,15 +62,17 @@ pub fn seek_info<R: Read + Sized>(r: &mut R) -> Result<SeekInfo> {
         });
     }
 
-    Ok(entries)
+    count += c;
+    Ok((entries, count))
 }
 
 /// Read and parse MKV segment information.
-pub fn segment_info<R: Read + Sized>(r: &mut R) -> Result<SegmentInfo> {
+/// Returns the parsed object and the number of bytes that were read.
+pub fn segment_info<R: Read + Sized>(r: &mut R) -> Result<(SegmentInfo, usize)> {
     let mut count = 0 as usize;
     let mut seg_info = SegmentInfo::default();
 
-    let (segment_info, _) = r.read_ebml_element_info()?;
+    let (segment_info, c) = r.read_ebml_element_info()?;
 
     while count < segment_info.size() {
         let (elem, c) = r.read_ebml_element()?;
@@ -92,15 +97,17 @@ pub fn segment_info<R: Read + Sized>(r: &mut R) -> Result<SegmentInfo> {
         };
     }
 
-    Ok(seg_info)
+    count += c;
+    Ok((seg_info, count))
 }
 
 /// Read and parse track information.
-pub fn track_info<R: Read + Sized>(r: &mut R) -> Result<TrackInfo> {
+/// Returns the parsed object and the number of bytes that were read.
+pub fn track_info<R: Read + Sized>(r: &mut R) -> Result<(TrackInfo, usize)> {
     let mut count = 0 as usize;
     let mut tracks = Vec::new();
 
-    let (track_info, _) = r.read_ebml_element_info()?;
+    let (track_info, c) = r.read_ebml_element_info()?;
 
     while count < track_info.size() {
         let (track, c) = track(r)?;
@@ -109,10 +116,12 @@ pub fn track_info<R: Read + Sized>(r: &mut R) -> Result<TrackInfo> {
         tracks.push(track);
     }
 
-    Ok(tracks)
+    count += c;
+    Ok((tracks, count))
 }
 
 /// Read and parse a single track entry.
+/// Returns the parsed object and the number of bytes that were read.
 pub fn track<R: Read + Sized>(r: &mut R) -> Result<(Track, usize)> {
     let mut count = 0 as usize;
     let mut track = Track::default();

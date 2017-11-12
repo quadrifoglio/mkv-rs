@@ -12,7 +12,7 @@ fn parse_header() {
         0x00, 0x00, 0x42, 0x87, 0x81, 0x01, 0x42, 0x85, 0x81, 0x01,
     ]);
 
-    let header = io::parse::header(&mut data).unwrap();
+    let (header, _) = io::parse::header(&mut data).unwrap();
 
     assert_eq!(header.ebml_version, 1);
     assert_eq!(header.ebml_read_version, 1);
@@ -33,7 +33,8 @@ fn parse_seek_info() {
         0xac, 0x82, 0x0d, 0x41,
     ]);
 
-    let mut seek = io::parse::seek_info(&mut data).unwrap().into_iter();
+    let (seek, _) = io::parse::seek_info(&mut data).unwrap();
+    let mut seek = seek.into_iter();
 
     let entry = seek.next().unwrap();
     assert_eq!(entry.seek_id, vec![0x15, 0x49, 0xa9, 0x66]);
@@ -65,7 +66,7 @@ fn parse_segment_info() {
         0x65, 0x7a, 0x65,
     ]);
 
-    let seg = io::parse::segment_info(&mut data).unwrap();
+    let (seg, _) = io::parse::segment_info(&mut data).unwrap();
 
     assert_eq!(
         seg.uid,
@@ -93,7 +94,8 @@ fn parse_track_info() {
         0x38, 0x25, 0x86, 0x88, 0x83, 0x56, 0x50, 0x38,
     ]);
 
-    let mut tracks = io::parse::track_info(&mut data).unwrap().into_iter();
+    let (tracks, _) = io::parse::track_info(&mut data).unwrap();
+    let mut tracks = tracks.into_iter();
 
     let entry = tracks.next().unwrap();
     let expected_uid = vec![
