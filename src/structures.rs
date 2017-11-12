@@ -37,7 +37,7 @@ pub struct SegmentInfo {
     pub date_utc: i64,
     pub title: String,
     pub muxing_app: String,
-    pub writing_app: String
+    pub writing_app: String,
 }
 
 /// List of tracks contained in an MKV file.
@@ -57,6 +57,7 @@ pub struct Track {
     pub max_cache: u64,
     pub default_duration: u64,
     pub default_decoded_field_duration: u64,
+    pub track_timecode_scale: f32,
     pub track_offset: i64,
     pub max_block_addition_id: u64,
     pub name: String,
