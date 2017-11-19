@@ -112,3 +112,27 @@ fn parse_track_info() {
     assert_eq!(entry.codec_id, String::from("V_VP8"));
     assert_eq!(entry.codec_name, String::from("VP8"));
 }
+
+#[test]
+fn pase_track_video() {
+    let mut data = Cursor::new(vec![
+        0xe0, 0x88, 0xb0, 0x82, 0x02, 0x80, 0xba, 0x82, 0x01, 0x68
+    ]);
+
+    let (video, _) = io::parse::track_video(&mut data).unwrap();
+
+    assert_eq!(video.pixel_width, 640);
+    assert_eq!(video.pixel_height, 360);
+}
+
+#[test]
+fn parse_track_audio() {
+    let mut data = Cursor::new(vec![
+        0xe1, 0x89, 0xb5, 0x84, 0x47, 0x2c, 0x44, 0x00, 0x9f, 0x81, 0x01
+    ]);
+
+    let (audio, _) = io::parse::track_audio(&mut data).unwrap();
+
+    assert_eq!(audio.sampling_frequency, 44100.0);
+    assert_eq!(audio.channels, 1);
+}

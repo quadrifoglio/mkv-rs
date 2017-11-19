@@ -98,6 +98,39 @@ pub struct VideoTrack {
     pub frame_rate: f32,
 }
 
+/// Informations about colors in a video track.
+#[derive(Default)]
+pub struct VideoColor {
+    pub matrix_coefficients: u64,
+    pub bits_per_channel: u64,
+    pub chroma_subsampling_horz: u64,
+    pub chroma_subsampling_vert: u64,
+    pub cb_subsampling_horz: u64,
+    pub cb_subsampling_vert: u64,
+    pub chroma_siting_horz: u64,
+    pub chroma_siting_vert: u64,
+    pub range: u64,
+    pub transfer_characteristics: u64,
+    pub primaries: u64,
+    pub max_cll: u64,
+    pub max_fall: u64,
+}
+
+/// Video colors mastering metadata.
+#[derive(Default)]
+pub struct VideoColorMasteringData {
+    pub primary_rchromaticity_x: f64,
+    pub primary_rchromaticity_y: f64,
+    pub primary_gchromaticity_x: f64,
+    pub primary_gchromaticity_y: f64,
+    pub primary_bchromaticity_x: f64,
+    pub primary_bchromaticity_y: f64,
+    pub white_point_chromaticity_x: f64,
+    pub white_point_chromaticity_y: f64,
+    pub luminance_max: f64,
+    pub luminance_min: f64,
+}
+
 /// Informations about an audio track.
 #[derive(Default)]
 pub struct AudioTrack {

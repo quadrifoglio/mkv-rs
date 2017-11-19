@@ -6,8 +6,7 @@ use ebml::io::ReadEbml;
 
 use elements as el;
 use error::Result;
-use structures::{AudioTrack, Header, SeekEntry, SeekInfo, SegmentInfo, Track, TrackInfo,
-                 VideoTrack};
+use structures::*;
 
 /// Read and parse an EBML header from an input source.
 /// Returns the parsed object and the number of bytes that were read.
@@ -210,6 +209,79 @@ pub fn track_video<R: Read + Sized>(r: &mut R) -> Result<(VideoTrack, usize)> {
 
     count += c;
     Ok((video, count))
+}
+
+/// Read and parse video track color information.
+/// Returns the parsed object and the number of bytes that were read.
+pub fn track_video_color<R: Read + Sized>(r: &mut R) -> Result<(VideoColor, usize)> {
+    let mut count = 0 as usize;
+    let mut color = VideoColor::default();
+
+    let (color_master, c) = r.read_ebml_element_info()?;
+
+    while count < color_master.size() {
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            el::MATRIX_COEFFICIENTS => color.matrix_coefficients = elem.data_u64(),
+            el::BITS_PER_CHANNEL => color.bits_per_channel = elem.data_u64(),
+            el::CHROMA_SUBSAMPLING_HORZ => color.chroma_subsampling_horz = elem.data_u64(),
+            el::CHROMA_SUBSAMPLING_VERT => color.chroma_subsampling_vert = elem.data_u64(),
+            el::CB_SUBSAMPLING_HORZ => color.cb_subsampling_horz = elem.data_u64(),
+            el::CB_SUBSAMPLING_VERT => color.cb_subsampling_vert = elem.data_u64(),
+            el::CHROMA_SITING_HORZ => color.chroma_siting_horz = elem.data_u64(),
+            el::CHROMA_SITING_VERT => color.chroma_siting_vert = elem.data_u64(),
+            el::RANGE => color.range = elem.data_u64(),
+            el::TRANSFER_CHARACTERISTICS => color.transfer_characteristics = elem.data_u64(),
+            el::PRIMARIES => color.primaries = elem.data_u64(),
+            el::MAX_CLL => color.max_cll = elem.data_u64(),
+            el::MAX_FALL => color.max_fall = elem.data_u64(),
+
+            _ => {}
+        };
+    }
+
+    count += c;
+    Ok((color, count))
+}
+
+/// Read and parse video track color mastering metadata.
+/// Returns the parsed object and the number of bytes that were read.
+pub fn track_video_color_mastering_data<R: Read + Sized>(
+    r: &mut R,
+) -> Result<(VideoColorMasteringData, usize)> {
+    let mut count = 0 as usize;
+    let mut mastering_data = VideoColorMasteringData::default();
+
+    let (mastering_data_master, c) = r.read_ebml_element_info()?;
+
+    while count < mastering_data_master.size() {
+        let (elem, c) = r.read_ebml_element()?;
+        count += c;
+
+        match elem.info().id() {
+            el::PRIMARY_RCHROMATICITY_X => mastering_data.primary_rchromaticity_x = elem.data_f64(),
+            el::PRIMARY_RCHROMATICITY_Y => mastering_data.primary_rchromaticity_y = elem.data_f64(),
+            el::PRIMARY_GCHROMATICITY_X => mastering_data.primary_gchromaticity_x = elem.data_f64(),
+            el::PRIMARY_GCHROMATICITY_Y => mastering_data.primary_gchromaticity_y = elem.data_f64(),
+            el::PRIMARY_BCHROMATICITY_X => mastering_data.primary_bchromaticity_x = elem.data_f64(),
+            el::PRIMARY_BCHROMATICITY_Y => mastering_data.primary_bchromaticity_y = elem.data_f64(),
+            el::WHITE_POINT_CHROMATICITY_X => {
+                mastering_data.white_point_chromaticity_x = elem.data_f64()
+            }
+            el::WHITE_POINT_CHROMATICITY_Y => {
+                mastering_data.white_point_chromaticity_y = elem.data_f64()
+            }
+            el::LUMINANCE_MAX => mastering_data.luminance_max = elem.data_f64(),
+            el::LUMINANCE_MIN => mastering_data.luminance_min = elem.data_f64(),
+
+            _ => {}
+        };
+    }
+
+    count += c;
+    Ok((mastering_data, count))
 }
 
 /// Read and parse audio track information.
