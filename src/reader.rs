@@ -16,9 +16,30 @@ pub struct Reader<R: Read> {
 
 impl<R: Read> Reader<R> {
     fn new(r: R) -> Reader<R> {
-        Reader {
-            ebml: ebml::reader::Reader::from(r),
-        }
+        let mut ebml = ebml::reader::Reader::from(r);
+
+        // Segment Information.
+
+        ebml.register::<el::Info>();
+        ebml.register::<el::SegmentUID>();
+        ebml.register::<el::SegmentFilename>();
+        ebml.register::<el::PrevUID>();
+        ebml.register::<el::PrevFilename>();
+        ebml.register::<el::NextUID>();
+        ebml.register::<el::NextFilename>();
+        ebml.register::<el::SegmentFamily>();
+        ebml.register::<el::ChapterTranslate>();
+        ebml.register::<el::ChapterTranslateEditionUID>();
+        ebml.register::<el::ChapterTranslateCodec>();
+        ebml.register::<el::ChapterTranslateID>();
+        ebml.register::<el::TimecodeScale>();
+        ebml.register::<el::Duration>();
+        ebml.register::<el::DateUTC>();
+        ebml.register::<el::Title>();
+        ebml.register::<el::MuxingApp>();
+        ebml.register::<el::WritingApp>();
+
+        Reader { ebml: ebml }
     }
 
     /// Read segment informations from the MKV input source.
@@ -36,7 +57,6 @@ impl<R: Read> Reader<R> {
         for child in segment_info.children() {
             match child.id() {
                 el::SEGMENT_UID => seg.uid = child.data().clone().take()?,
-
                 el::SEGMENT_FILENAME => seg.segment_filename = child.data().to_utf8()?,
                 el::PREV_UID => seg.prev_uid = child.data().clone().take()?,
                 el::PREV_FILENAME => seg.prev_filename = child.data().to_utf8()?,
