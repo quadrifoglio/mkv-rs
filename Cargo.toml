@@ -5,3 +5,4 @@ authors = ["quadrifoglio <quadrifoglio.clement@protonmail.com>"]
 
 [dependencies]
 error-chain = "0.11.0"
+ebml = { git = "https://github.com/quadrifoglio/ebml-rs" }

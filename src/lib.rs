@@ -7,8 +7,13 @@
 #[macro_use]
 extern crate error_chain;
 
-mod error;
-mod reader;
+#[macro_use]
+extern crate ebml;
+
+pub mod error;
+pub mod elements;
+pub mod structures;
+pub mod reader;
 
 pub use reader::Reader;
 
