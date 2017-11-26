@@ -2,8 +2,15 @@
 
 use ebml::element::types::*;
 
+/// Seek entry to an EBML Element.
+#[derive(Default)]
+pub struct SeekEntry {
+    pub(crate) id: Binary,
+    pub(crate) position: UnsignedInt,
+}
+
 /// Contains miscellaneous general information and statistics on the file.
-pub struct Segment {
+pub struct SegmentInfo {
     pub(crate) uid: Binary,
     pub(crate) segment_filename: Utf8,
     pub(crate) prev_uid: Binary,
@@ -20,9 +27,9 @@ pub struct Segment {
     pub(crate) writing_app: Utf8,
 }
 
-impl ::std::default::Default for Segment {
-    fn default() -> Segment {
-        Segment {
+impl ::std::default::Default for SegmentInfo {
+    fn default() -> Self {
+        SegmentInfo {
             uid: Binary::default(),
             segment_filename: Utf8::default(),
             prev_uid: Binary::default(),
@@ -41,17 +48,10 @@ impl ::std::default::Default for Segment {
     }
 }
 
-/// A tuple of corresponding ID used by chapter codecs to represent this Segment.
+/// A tuple of corresponding ID used by chapter codecs to represent a segment.
 #[derive(Default)]
 pub struct ChapterTranslate {
     pub(crate) edition_uids: Vec<UnsignedInt>,
     pub(crate) codec: UnsignedInt,
     pub(crate) id: Binary,
-}
-
-impl Segment {
-    /// Returns the UID of the Segment.
-    pub fn uid<'a>(&'a self) -> &'a Binary {
-        &self.uid
-    }
 }

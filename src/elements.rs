@@ -2,6 +2,18 @@
 
 use ebml::element::types::*;
 
+// Meta Seek Information.
+
+pub const SEEK_HEAD: UnsignedInt = 0x114D9B74;
+pub const SEEK: UnsignedInt = 0x4DBB;
+pub const SEEK_ID: UnsignedInt = 0x53AB;
+pub const SEEK_POSITION: UnsignedInt = 0x53AC;
+
+ebml_element_container!(SeekHead => SEEK_HEAD);
+ebml_element_container!(Seek => SEEK);
+ebml_element_mandatory!(SeekID => SEEK_ID, Binary);
+ebml_element_mandatory!(SeekPosition => SEEK_POSITION, UnsignedInt);
+
 // Segment Information.
 
 pub const INFO: UnsignedInt = 0x1549A966;
