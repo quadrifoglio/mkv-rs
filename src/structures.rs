@@ -250,3 +250,52 @@ impl ::std::default::Default for TrackAudio {
         }
     }
 }
+
+/// Contains all information relative to a seek point in the Segment.
+#[derive(Default)]
+pub struct CuePoint {
+    pub(crate) time: UnsignedInt,
+    pub(crate) track_positions: Vec<CueTrackPosition>,
+}
+
+/// Contains position for a track corresponding to a timestamp.
+pub struct CueTrackPosition {
+    pub(crate) cluster_position: UnsignedInt,
+    pub(crate) relative_position: UnsignedInt,
+    pub(crate) duration: UnsignedInt,
+    pub(crate) block_number: UnsignedInt,
+    pub(crate) codec_state: UnsignedInt,
+    pub(crate) references: Vec<CueReference>,
+}
+
+impl ::std::default::Default for CueTrackPosition {
+    fn default() -> Self {
+        CueTrackPosition {
+            cluster_position: UnsignedInt::default(),
+            relative_position: UnsignedInt::default(),
+            duration: UnsignedInt::default(),
+            block_number: 1,
+            codec_state: 0,
+            references: Vec::new(),
+        }
+    }
+}
+
+/// The Clusters containing the required referenced Blocks.
+pub struct CueReference {
+    pub(crate) time: UnsignedInt,
+    pub(crate) cluster: UnsignedInt,
+    pub(crate) number: UnsignedInt,
+    pub(crate) codecState: UnsignedInt,
+}
+
+impl ::std::default::Default for CueReference {
+    fn default() -> Self {
+        CueReference {
+            time: UnsignedInt::default(),
+            cluster: UnsignedInt::default(),
+            number: 1,
+            codecState: UnsignedInt::default(),
+        }
+    }
+}

@@ -182,6 +182,22 @@ pub const CONTENT_SIG_KEY_ID: UnsignedInt = 0x47E4;
 pub const CONTENT_SIG_ALGO: UnsignedInt = 0x47E5;
 pub const CONTENT_SIG_HASH_ALGO: UnsignedInt = 0x47E6;
 
+pub const CUES: UnsignedInt = 0x1C53BB6B;
+pub const CUE_POINT: UnsignedInt = 0xBB;
+pub const CUE_TIME: UnsignedInt = 0xB3;
+pub const CUE_TRACK_POSITIONS: UnsignedInt = 0xB7;
+pub const CUE_TRACK: UnsignedInt = 0xF7;
+pub const CUE_CLUSTER_POSITION: UnsignedInt = 0xF1;
+pub const CUE_RELATIVE_POSITION: UnsignedInt = 0xF0;
+pub const CUE_DURATION: UnsignedInt = 0xB2;
+pub const CUE_BLOCK_NUMBER: UnsignedInt = 0x5378;
+pub const CUE_CODEC_STATE: UnsignedInt = 0xEA;
+pub const CUE_REFERENCE: UnsignedInt = 0xDB;
+pub const CUE_REF_TIME: UnsignedInt = 0x96;
+pub const CUE_REF_CLUSTER: UnsignedInt = 0x97;
+pub const CUE_REF_NUMBER: UnsignedInt = 0x535F;
+pub const CUE_REF_CODEC_STATE: UnsignedInt = 0xEB;
+
 ebml_element_container!(Tracks => TRACKS);
 ebml_element_container!(TrackEntry => TRACK_ENTRY);
 
@@ -304,3 +320,22 @@ ebml_element_mandatory!(ContentSignature => CONTENT_SIGNATURE, Binary);
 ebml_element_mandatory!(ContentSigKeyID => CONTENT_SIG_KEY_ID, Binary);
 ebml_element_mandatory!(ContentSigAlgo => CONTENT_SIG_ALGO, UnsignedInt);
 ebml_element_mandatory!(ContentSigHashAlgo => CONTENT_SIG_HASH_ALGO, UnsignedInt);
+
+ebml_element_container!(Cues => CUES);
+
+ebml_element_container!(CuePoint => CUE_POINT);
+ebml_element_mandatory!(CueTime => CUE_TIME, UnsignedInt);
+
+ebml_element_container!(CueTrackPositions => CUE_TRACK_POSITIONS);
+ebml_element_mandatory!(CueTrack => CUE_TRACK, UnsignedInt);
+ebml_element_mandatory!(CueClusterPosition => CUE_CLUSTER_POSITION, UnsignedInt);
+ebml_element_mandatory!(CueRelativePosition => CUE_RELATIVE_POSITION, UnsignedInt);
+ebml_element_mandatory!(CueDuration => CUE_DURATION, UnsignedInt);
+ebml_element_mandatory!(CueBlockNumber => CUE_BLOCK_NUMBER, UnsignedInt);
+ebml_element_mandatory!(CueCodecState => CUE_CODEC_STATE, UnsignedInt);
+
+ebml_element_container!(CueReference => CUE_REFERENCE);
+ebml_element_mandatory!(CueRefTime => CUE_REF_TIME, UnsignedInt);
+ebml_element_mandatory!(CueRefCluster => CUE_REF_CLUSTER, UnsignedInt);
+ebml_element_mandatory!(CueRefNumber => CUE_REF_NUMBER, UnsignedInt);
+ebml_element_mandatory!(CueRefCodecState => CUE_REF_CODEC_STATE, UnsignedInt);
