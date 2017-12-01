@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["quadrifoglio <quadrifoglio.clement@protonmail.com>"]
 
 [dependencies]
+ebml = { git = "https://github.com/quadrifoglio/ebml-rs" }
