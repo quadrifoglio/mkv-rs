@@ -1,3 +1,0 @@
-//! Unit tests.
-
-mod reader;
