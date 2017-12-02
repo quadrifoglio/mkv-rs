@@ -4,10 +4,11 @@ use std::io::Read;
 use std::collections::HashMap;
 
 use ebml::element::types::*;
+use ebml::element::Element;
 use ebml::element::Id as EbmlId;
 use ebml::reader::Reader;
 
-use error::{Error, ErrorKind, Result};
+use error::Result;
 use elements as el;
 
 /// A type alias representing a map of Element IDs to their position in the MKV file.
@@ -56,10 +57,7 @@ pub fn read_seek_information<R: Read>(ebml: &mut Reader<R>) -> Result<SeekEntrie
     let (elem, _) = ebml.read_element(true)?;
 
     for entry in elem.children() {
-        let id = entry.find::<el::SeekID>().ok_or(Error::from(ErrorKind::ElementNotFound(el::SEEK_ID)))?;
-        let pos = entry.find::<el::SeekPosition>().ok_or(Error::from(ErrorKind::ElementNotFound(el::SEEK_POSITION)))?;
-
-        entries.insert(id.data().to_unsigned_int()?, pos.data().to_unsigned_int()?);
+        entries.insert(find_child_uint!(entry, el::SeekID), find_child_uint!(entry, el::SeekPosition));
     }
 
     Ok(entries)
@@ -78,11 +76,7 @@ pub fn read_information<R: Read>(ebml: &mut Reader<R>) -> Result<SegmentInfo> {
         segment_info.filename = Some(filename.data().to_utf8()?);
     }
 
-    if let Some(timecode_scale) = elem.find::<el::TimecodeScale>() {
-        segment_info.timecode_scale = timecode_scale.data().to_unsigned_int()?;
-    } else {
-        segment_info.timecode_scale = 1000000;
-    }
+    segment_info.timecode_scale = find_child_uint_or!(elem, el::TimecodeScale, 1000000);
 
     Ok(segment_info)
 }
