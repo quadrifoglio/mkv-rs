@@ -44,4 +44,5 @@ macro_rules! find_child_float_or {
 
 pub mod segment;
 pub mod tracks;
+pub mod cluster;
 pub mod cues;

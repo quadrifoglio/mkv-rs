@@ -170,3 +170,37 @@ pub const CUE_REF_TIME: UnsignedInt = 0x96;
 pub const CUE_REF_CLUSTER: UnsignedInt = 0x97;
 pub const CUE_REF_NUMBER: UnsignedInt = 0x535F;
 pub const CUE_REF_CODEC_STATE: UnsignedInt = 0xEB;
+
+// Cluser data.
+
+pub const CLUSTER: UnsignedInt = 0x1F43B675;
+pub const TIMECODE: UnsignedInt = 0xE7;
+pub const SILENT_TRACKS: UnsignedInt = 0x5854;
+pub const SILENT_TRACK_NUMBER: UnsignedInt = 0x58D7;
+pub const POSITION: UnsignedInt = 0xA7;
+pub const PREV_SIZE: UnsignedInt = 0xAB;
+pub const SIMPLE_BLOCK: UnsignedInt = 0xA3;
+pub const BLOCK_GROUP: UnsignedInt = 0xA0;
+pub const BLOCK: UnsignedInt = 0xA1;
+pub const BLOCK_VIRTUAL: UnsignedInt = 0xA2;
+pub const BLOCK_ADDITIONS: UnsignedInt = 0x75A1;
+pub const BLOCK_MORE: UnsignedInt = 0xA6;
+pub const BLOCK_ADD_ID: UnsignedInt = 0xEE;
+pub const BLOCK_ADDITIONAL: UnsignedInt = 0xA5;
+pub const BLOCK_DURATION: UnsignedInt = 0x9B;
+pub const REFERENCE_PRIORITY: UnsignedInt = 0xFA;
+pub const REFERENCE_BLOCK: UnsignedInt = 0xFB;
+pub const REFERENCE_VIRTUAL: UnsignedInt = 0xFD;
+pub const CODEC_STATE: UnsignedInt = 0xA4;
+pub const DISCARD_PADDING: UnsignedInt = 0x75A2;
+pub const SLICES: UnsignedInt = 0x8E;
+pub const TIME_SLICE: UnsignedInt = 0xE8;
+pub const LACE_NUMBER: UnsignedInt = 0xCC;
+pub const FRAME_NUMBER: UnsignedInt = 0xCD;
+pub const BLOCK_ADDITIONID: UnsignedInt = 0xCB;
+pub const DELAY: UnsignedInt = 0xCE;
+pub const SLICE_DURATION: UnsignedInt = 0xCF;
+pub const REFERENCE_FRAME: UnsignedInt = 0xC8;
+pub const REFERENCE_OFFSET: UnsignedInt = 0xC9;
+pub const REFERENCE_TIMECODE: UnsignedInt = 0xCA;
+pub const ENCRYPTED_BLOCK: UnsignedInt = 0xAF;
