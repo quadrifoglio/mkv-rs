@@ -10,13 +10,26 @@ use elements as el;
 
 /// Possible MKV track types.
 pub enum TrackKind {
-    Video,
-    Audio,
+    Video(TrackVideo),
+    Audio(TrackAudio),
     Complex,
     Logo,
     Subtitle,
     Buttons,
     Control,
+}
+
+/// Information about a video track.
+pub struct TrackVideo {
+    pub pixel_width: UnsignedInt,
+    pub pixel_height: UnsignedInt,
+}
+
+/// Information about an audio track.
+pub struct TrackAudio {
+    pub channels: UnsignedInt,
+    pub sampling_freq: Float,
+    pub out_sampling_freq: Float
 }
 
 /// Contains parsed information about an MKV track.
@@ -170,8 +183,43 @@ pub fn read_track_information<R: Read>(ebml: &mut Reader<R>) -> Result<Vec<Track
         let codec_id = entry.find::<el::CodecID>().ok_or(Error::from(ErrorKind::ElementNotFound(el::CODEC_ID)))?;
 
         let kind = match kind.data().to_unsigned_int()? {
-            0x01 => TrackKind::Video,
-            0x02 => TrackKind::Audio,
+            0x01 => {
+                let video = entry.find::<el::Video>().ok_or(Error::from(ErrorKind::ElementNotFound(el::VIDEO)))?;
+
+                let pw = video.find::<el::PixelWidth>().ok_or(Error::from(ErrorKind::ElementNotFound(el::PIXEL_WIDTH)))?;
+                let ph = video.find::<el::PixelHeight>().ok_or(Error::from(ErrorKind::ElementNotFound(el::PIXEL_HEIGHT)))?;
+
+                TrackKind::Video(TrackVideo {
+                    pixel_width: pw.data().to_unsigned_int()?,
+                    pixel_height: ph.data().to_unsigned_int()?,
+                })
+            },
+
+            0x02 => {
+                let audio = entry.find::<el::Audio>().ok_or(Error::from(ErrorKind::ElementNotFound(el::AUDIO)))?;
+
+                let mut channels = 1;
+                if let Some(chs) = audio.find::<el::Channels>() {
+                    channels = chs.data().to_unsigned_int()?;
+                }
+
+                let mut sampling_freq = 8000.0;
+                if let Some(sf) = audio.find::<el::SamplingFrequency>() {
+                    sampling_freq = sf.data().to_float()?;
+                }
+
+                let mut out_sampling_freq = sampling_freq;
+                if let Some(osf) = audio.find::<el::OutputSamplingFrequency>() {
+                    out_sampling_freq = osf.data().to_float()?;
+                }
+
+                TrackKind::Audio(TrackAudio {
+                    channels: channels,
+                    sampling_freq: sampling_freq,
+                    out_sampling_freq: out_sampling_freq
+                })
+            },
+
             0x03 => TrackKind::Complex,
             0x10 => TrackKind::Logo,
             0x11 => TrackKind::Subtitle,
