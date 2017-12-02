@@ -9,11 +9,6 @@ pub const SEEK: UnsignedInt = 0x4DBB;
 pub const SEEK_ID: UnsignedInt = 0x53AB;
 pub const SEEK_POSITION: UnsignedInt = 0x53AC;
 
-ebml_element_container!(SeekHead => SEEK_HEAD);
-ebml_element_container!(Seek => SEEK);
-ebml_element_mandatory!(SeekID => SEEK_ID, Binary);
-ebml_element_mandatory!(SeekPosition => SEEK_POSITION, UnsignedInt);
-
 // Segment Information.
 
 pub const INFO: UnsignedInt = 0x1549A966;
@@ -34,28 +29,6 @@ pub const DATE_UTC: UnsignedInt = 0x4461;
 pub const TITLE: UnsignedInt = 0x7BA9;
 pub const MUXING_APP: UnsignedInt = 0x4D80;
 pub const WRITING_APP: UnsignedInt = 0x5741;
-
-ebml_element_container!(Info => INFO);
-
-ebml_element_mandatory!(SegmentUID => SEGMENT_UID, Binary);
-ebml_element_mandatory!(SegmentFilename => SEGMENT_FILENAME, Utf8);
-ebml_element_mandatory!(PrevUID => PREV_UID, Binary);
-ebml_element_mandatory!(PrevFilename => PREV_FILENAME, Utf8);
-ebml_element_mandatory!(NextUID => NEXT_UID, Binary);
-ebml_element_mandatory!(NextFilename => NEXT_FILENAME, Utf8);
-ebml_element_mandatory!(SegmentFamily => SEGMENT_FAMILY, Binary);
-
-ebml_element_container!(ChapterTranslate => CHAPTER_TRANSLATE);
-ebml_element_mandatory!(ChapterTranslateEditionUID => CHAPTER_TRANSLATE_EDITION_UID, UnsignedInt);
-ebml_element_mandatory!(ChapterTranslateCodec => CHAPTER_TRANSLATE_CODEC, UnsignedInt);
-ebml_element_mandatory!(ChapterTranslateID => CHAPTER_TRANSLATE_ID, Binary);
-
-ebml_element_mandatory!(TimecodeScale => TIMECODE_SCALE, UnsignedInt);
-ebml_element_mandatory!(Duration => DURATION, Float);
-ebml_element_mandatory!(DateUTC => DATE_UTC, Binary);
-ebml_element_mandatory!(Title => TITLE, Utf8);
-ebml_element_mandatory!(MuxingApp => MUXING_APP, Utf8);
-ebml_element_mandatory!(WritingApp => WRITING_APP, Utf8);
 
 // Track information.
 
@@ -197,126 +170,3 @@ pub const CUE_REF_TIME: UnsignedInt = 0x96;
 pub const CUE_REF_CLUSTER: UnsignedInt = 0x97;
 pub const CUE_REF_NUMBER: UnsignedInt = 0x535F;
 pub const CUE_REF_CODEC_STATE: UnsignedInt = 0xEB;
-
-ebml_element_container!(Tracks => TRACKS);
-ebml_element_container!(TrackEntry => TRACK_ENTRY);
-
-ebml_element_mandatory!(TrackNumber => TRACK_NUMBER, UnsignedInt);
-ebml_element_mandatory!(TrackUID => TRACK_UID, UnsignedInt);
-ebml_element_mandatory!(TrackType => TRACK_TYPE, UnsignedInt);
-ebml_element_mandatory!(FlagEnabled => FLAG_ENABLED, UnsignedInt);
-ebml_element_mandatory!(FlagDefault => FLAG_DEFAULT, UnsignedInt);
-ebml_element_mandatory!(FlagForced => FLAG_FORCED, UnsignedInt);
-ebml_element_mandatory!(FlagLacing => FLAG_LACING, UnsignedInt);
-ebml_element_mandatory!(MinCache => MIN_CACHE, UnsignedInt);
-ebml_element_mandatory!(MaxCache => MAX_CACHE, UnsignedInt);
-ebml_element_mandatory!(DefaultDuration => DEFAULT_DURATION, UnsignedInt);
-ebml_element_mandatory!(DefaultDecodedFieldDuration => DEFAULT_DECODED_FIELD_DURATION, UnsignedInt);
-ebml_element_mandatory!(TrackTimecodeScale => TRACK_TIMECODE_SCALE, Float);
-ebml_element_mandatory!(TrackOffset => TRACK_OFFSET, SignedInt);
-ebml_element_mandatory!(MaxBlockAdditionID => MAX_BLOCK_ADDITION_ID, UnsignedInt);
-ebml_element_mandatory!(Name => NAME, Utf8);
-ebml_element_mandatory!(Language => LANGUAGE, Utf8);
-ebml_element_mandatory!(CodecID => CODEC_ID, Utf8);
-ebml_element_mandatory!(CodecPrivate => CODEC_PRIVATE, Binary);
-ebml_element_mandatory!(CodecName => CODEC_NAME, Utf8);
-ebml_element_mandatory!(AttachmentLink => ATTACHMENT_LINK, UnsignedInt);
-ebml_element_mandatory!(CodecSettings => CODEC_SETTINGS, Utf8);
-ebml_element_mandatory!(CodecInfoURL => CODEC_INFO_URL, Utf8);
-ebml_element_mandatory!(CodecDownloadURL => CODEC_DOWNLOAD_URL, Utf8);
-ebml_element_mandatory!(CodecDecodeAll => CODEC_DECODE_ALL, UnsignedInt);
-ebml_element_mandatory!(TrackOverlay => TRACK_OVERLAY, UnsignedInt);
-ebml_element_mandatory!(CodecDelay => CODEC_DELAY, UnsignedInt);
-ebml_element_mandatory!(SeekPreRoll => SEEK_PRE_ROLL, UnsignedInt);
-
-ebml_element_container!(TrackTranslate => TRACK_TRANSLATE);
-ebml_element_mandatory!(TrackTranslateEditionUID => TRACK_TRANSLATE_EDITION_UID, UnsignedInt);
-ebml_element_mandatory!(TrackTranslateCodec => TRACK_TRANSLATE_CODEC, UnsignedInt);
-ebml_element_mandatory!(TrackTranslateTrackID => TRACK_TRANSLATE_TRACK_ID, Binary);
-
-ebml_element_container!(Video => VIDEO);
-ebml_element_mandatory!(FlagInterlaced => FLAG_INTERLACED, UnsignedInt);
-ebml_element_mandatory!(FieldOrder => FIELD_ORDER, UnsignedInt);
-ebml_element_mandatory!(StereoMode => STEREO_MODE, UnsignedInt);
-ebml_element_mandatory!(AlphaMode => ALPHA_MODE, UnsignedInt);
-ebml_element_mandatory!(OldStereoMode => OLD_STEREO_MODE, UnsignedInt);
-ebml_element_mandatory!(PixelWidth => PIXEL_WIDTH, UnsignedInt);
-ebml_element_mandatory!(PixelHeight => PIXEL_HEIGHT, UnsignedInt);
-ebml_element_mandatory!(PixelCropBottom => PIXEL_CROP_BOTTOM, UnsignedInt);
-ebml_element_mandatory!(PixelCropTop => PIXEL_CROP_TOP, UnsignedInt);
-ebml_element_mandatory!(PixelCropLeft => PIXEL_CROP_LEFT, UnsignedInt);
-ebml_element_mandatory!(PixelCropRight => PIXEL_CROP_RIGHT, UnsignedInt);
-ebml_element_mandatory!(DisplayWidth => DISPLAY_WIDTH, UnsignedInt);
-ebml_element_mandatory!(DisplayHeight => DISPLAY_HEIGHT, UnsignedInt);
-ebml_element_mandatory!(DisplayUnit => DISPLAY_UNIT, UnsignedInt);
-ebml_element_mandatory!(AspectRatioType => ASPECT_RATIO_TYPE, UnsignedInt);
-ebml_element_mandatory!(ColourSpace => COLOUR_SPACE, Binary);
-ebml_element_mandatory!(GammaValue => GAMMA_VALUE, Float);
-ebml_element_mandatory!(FrameRate => FRAME_RATE, Float);
-
-ebml_element_container!(Colour => COLOUR);
-ebml_element_mandatory!(MatrixCoefficients => MATRIX_COEFFICIENTS, UnsignedInt);
-ebml_element_mandatory!(BitsPerChannel => BITS_PER_CHANNEL, UnsignedInt);
-ebml_element_mandatory!(ChromaSubsamplingHorz => CHROMA_SUBSAMPLING_HORZ, UnsignedInt);
-ebml_element_mandatory!(ChromaSubsamplingVert => CHROMA_SUBSAMPLING_VERT, UnsignedInt);
-ebml_element_mandatory!(CbSubsamplingHorz => CB_SUBSAMPLING_HORZ, UnsignedInt);
-ebml_element_mandatory!(CbSubsamplingVert => CB_SUBSAMPLING_VERT, UnsignedInt);
-ebml_element_mandatory!(ChromaSitingHorz => CHROMA_SITING_HORZ, UnsignedInt);
-ebml_element_mandatory!(ChromaSitingVert => CHROMA_SITING_VERT, UnsignedInt);
-ebml_element_mandatory!(Range => RANGE, UnsignedInt);
-ebml_element_mandatory!(TransferCharacteristics => TRANSFER_CHARACTERISTICS, UnsignedInt);
-ebml_element_mandatory!(Primaries => PRIMARIES, UnsignedInt);
-ebml_element_mandatory!(MaxCLL => MAX_CLL, UnsignedInt);
-ebml_element_mandatory!(MaxFALL => MAX_FALL, UnsignedInt);
-
-ebml_element_container!(MasteringMetadata => MASTERING_METADATA);
-ebml_element_mandatory!(PrimaryRChromaticityX => PRIMARY_RCHROMATICITY_X, Float);
-ebml_element_mandatory!(PrimaryRChromaticityY => PRIMARY_RCHROMATICITY_Y, Float);
-ebml_element_mandatory!(PrimaryGChromaticityX => PRIMARY_GCHROMATICITY_X, Float);
-ebml_element_mandatory!(PrimaryGChromaticityY => PRIMARY_GCHROMATICITY_Y, Float);
-ebml_element_mandatory!(PrimaryBChromaticityX => PRIMARY_BCHROMATICITY_X, Float);
-ebml_element_mandatory!(PrimaryBChromaticityY => PRIMARY_BCHROMATICITY_Y, Float);
-ebml_element_mandatory!(WhitePointChromaticityX => WHITE_POINT_CHROMATICITY_X, Float);
-ebml_element_mandatory!(WhitePointChromaticityY => WHITE_POINT_CHROMATICITY_Y, Float);
-ebml_element_mandatory!(LuminanceMax => LUMINANCE_MAX, Float);
-ebml_element_mandatory!(LuminanceMin => LUMINANCE_MIN, Float);
-
-ebml_element_container!(Audio => AUDIO);
-ebml_element_mandatory!(SamplingFrequency => SAMPLING_FREQUENCY, Float);
-ebml_element_mandatory!(OutputSamplingFrequency => OUTPUT_SAMPLING_FREQUENCY, Float);
-ebml_element_mandatory!(Channels => CHANNELS, UnsignedInt);
-ebml_element_mandatory!(ChannelPositions => CHANNEL_POSITIONS, Binary);
-ebml_element_mandatory!(BitDepth => BIT_DEPTH, UnsignedInt);
-
-ebml_element_container!(TrackOperation => TRACK_OPERATION);
-
-ebml_element_container!(TrackCombinePlanes => TRACK_COMBINE_PLANES);
-ebml_element_container!(TrackPlane => TRACK_PLANE);
-ebml_element_mandatory!(TrackPlaneUID => TRACK_PLANE_UID, UnsignedInt);
-ebml_element_mandatory!(TrackPlaneType => TRACK_PLANE_TYPE, UnsignedInt);
-
-ebml_element_container!(TrackJoinBlocks => TRACK_JOIN_BLOCKS);
-ebml_element_mandatory!(TrackJoinUID => TRACK_JOIN_UID, UnsignedInt);
-ebml_element_mandatory!(TrickTrackUID => TRICK_TRACK_UID, UnsignedInt);
-ebml_element_mandatory!(TrickTrackSegmentUID => TRICK_TRACK_SEGMENT_UID, Binary);
-ebml_element_mandatory!(TrickTrackFlag => TRICK_TRACK_FLAG, UnsignedInt);
-ebml_element_mandatory!(TrickMasterTrackUID => TRICK_MASTER_TRACK_UID, UnsignedInt);
-ebml_element_mandatory!(TrickMasterTrackSegmentUID => TRICK_MASTER_TRACK_SEGMENT_UID, Binary);
-
-ebml_element_container!(ContentEncodings => CONTENT_ENCODINGS);
-ebml_element_container!(ContentEncoding => CONTENT_ENCODING);
-ebml_element_mandatory!(ContentEncodingOrder => CONTENT_ENCODING_ORDER, UnsignedInt);
-ebml_element_mandatory!(ContentEncodingScope => CONTENT_ENCODING_SCOPE, UnsignedInt);
-ebml_element_mandatory!(ContentEncodingType => CONTENT_ENCODING_TYPE, UnsignedInt);
-
-ebml_element_container!(ContentCompression => CONTENT_COMPRESSION);
-ebml_element_mandatory!(ContentCompAlgo => CONTENT_COMP_ALGO, UnsignedInt);
-ebml_element_mandatory!(ContentCompSettings => CONTENT_COMP_SETTINGS, Binary);
-
-ebml_element_container!(ContentEncryption => CONTENT_ENCRYPTION);
-ebml_element_mandatory!(ContentEncAlgo => CONTENT_ENC_ALGO, UnsignedInt);
-ebml_element_mandatory!(ContentEncKeyID => CONTENT_ENC_KEY_ID, Binary);
-ebml_element_mandatory!(ContentSignature => CONTENT_SIGNATURE, Binary);
-ebml_element_mandatory!(ContentSigKeyID => CONTENT_SIG_KEY_ID, Binary);
-ebml_element_mandatory!(ContentSigAlgo => CONTENT_SIG_ALGO, UnsignedInt);
-ebml_element_mandatory!(ContentSigHashAlgo => CONTENT_SIG_HASH_ALGO, UnsignedInt);
