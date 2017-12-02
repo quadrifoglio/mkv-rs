@@ -164,10 +164,10 @@ pub fn read_track_information<R: Read>(ebml: &mut Reader<R>) -> Result<Vec<Track
     }
 
     for entry in elem.children() {
-        let number = entry.find::<el::TrackNumber>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
-        let uid = entry.find::<el::TrackUID>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
-        let kind = entry.find::<el::TrackType>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
-        let codec_id = entry.find::<el::CodecID>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
+        let number = entry.find::<el::TrackNumber>().ok_or(Error::from(ErrorKind::ElementNotFound(el::TRACK_NUMBER)))?;
+        let uid = entry.find::<el::TrackUID>().ok_or(Error::from(ErrorKind::ElementNotFound(el::TRACK_UID)))?;
+        let kind = entry.find::<el::TrackType>().ok_or(Error::from(ErrorKind::ElementNotFound(el::TRACK_TYPE)))?;
+        let codec_id = entry.find::<el::CodecID>().ok_or(Error::from(ErrorKind::ElementNotFound(el::CODEC_ID)))?;
 
         let kind = match kind.data().to_unsigned_int()? {
             0x01 => TrackKind::Video,
@@ -178,7 +178,7 @@ pub fn read_track_information<R: Read>(ebml: &mut Reader<R>) -> Result<Vec<Track
             0x12 => TrackKind::Buttons,
             0x20 => TrackKind::Control,
 
-            _ => bail!(ErrorKind::InvalidElementValue(el::TRACK_TYPE)),
+            wtf => bail!(ErrorKind::InvalidElementValue(el::TRACK_TYPE, format!("{}", wtf))),
         };
 
         tracks.push(Track {

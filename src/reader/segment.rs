@@ -56,8 +56,8 @@ pub fn read_seek_information<R: Read>(ebml: &mut Reader<R>) -> Result<SeekEntrie
     let (elem, _) = ebml.read_element(true)?;
 
     for entry in elem.children() {
-        let id = entry.find::<el::SeekID>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
-        let pos = entry.find::<el::SeekPosition>().ok_or(Error::from(ErrorKind::ElementNotFound))?;
+        let id = entry.find::<el::SeekID>().ok_or(Error::from(ErrorKind::ElementNotFound(el::SEEK_ID)))?;
+        let pos = entry.find::<el::SeekPosition>().ok_or(Error::from(ErrorKind::ElementNotFound(el::SEEK_POSITION)))?;
 
         entries.insert(id.data().to_unsigned_int()?, pos.data().to_unsigned_int()?);
     }
