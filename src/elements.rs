@@ -2,6 +2,10 @@
 
 use ebml::element::types::*;
 
+// Root element.
+
+pub const SEGMENT: UnsignedInt = 0x18538067;
+
 // Meta Seek Information.
 
 pub const SEEK_HEAD: UnsignedInt = 0x114D9B74;
