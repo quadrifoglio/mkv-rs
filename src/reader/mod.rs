@@ -53,9 +53,16 @@ impl<R: Read> VideoReader<R> {
                         count += c;
                     },
 
+                    el::TRACKS => {
+                        let (_, c) = tracks::read_track_information(&mut self.reader)?;
+                        count += c;
+                    },
+
                     el::CLUSTER => break 'main,
 
-                    _ => {},
+                    _ => {
+                        let _ = ebml::reader::read_element_data(&mut self.reader, size)?;
+                    },
                 };
             }
         }

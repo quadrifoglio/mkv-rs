@@ -41,10 +41,10 @@ pub struct Track {
 }
 
 /// Read information about all tracks in the MKV source.
-pub fn read_track_information<R: Read>(r: &mut R) -> Result<Vec<Track>> {
+pub fn read_track_information<R: Read>(r: &mut R) -> Result<(Vec<Track>, usize)> {
     let mut tracks = Vec::new();
 
-    let (elem, _) = ebml::reader::read_element(r)?;
+    let (elem, count) = ebml::reader::read_element(r)?;
 
     for track_entry in elem.content().children()?.vec() {
         let mut data = track_entry.content().children()?;
@@ -124,5 +124,5 @@ pub fn read_track_information<R: Read>(r: &mut R) -> Result<Vec<Track>> {
         });
     }
 
-    Ok(tracks)
+    Ok((tracks, count))
 }
