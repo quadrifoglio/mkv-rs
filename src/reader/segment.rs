@@ -3,15 +3,14 @@
 use std::io::Read;
 use std::collections::HashMap;
 
-use ebml::element::types::*;
-use ebml::element::Id as EbmlId;
-use ebml::reader::Reader;
+use ebml;
+use ebml::common::types::*;
 
-use error::Result;
+use error::{self, Result};
 use elements as el;
 
 /// A type alias representing a map of Element IDs to their position in the MKV file.
-pub type SeekEntries = HashMap<EbmlId, UnsignedInt>;
+pub type SeekEntries = HashMap<ElementId, UnsignedInt>;
 
 /// Contains parsed information about an MKV segment.
 #[derive(Default)]
@@ -21,41 +20,50 @@ pub struct SegmentInfo {
     pub timecode_scale: UnsignedInt
 }
 
-/// Initialize the specified EBML reader to make it ready to read MKV segment information.
-pub fn init<R: Read>(ebml: &mut Reader<R>) {
-    ebml.register_container(el::SEEK_HEAD);
-    ebml.register_container(el::SEEK);
-
-    ebml.register_container(el::INFO);
-    ebml.register_container(el::CHAPTER_TRANSLATE);
-}
-
 /// Read seeking information. Returns a map of Elements to their position in the file.
-pub fn read_seek_information<R: Read>(ebml: &mut Reader<R>) -> Result<SeekEntries> {
+pub fn read_seek_information<R: Read>(r: &mut R) -> Result<(SeekEntries, usize)> {
     let mut entries = HashMap::new();
-    let (elem, _) = ebml.read_element(true)?;
+    let (elem, count) = ebml::reader::read_element(r)?;
 
-    for entry in elem.children() {
-        entries.insert(find_child_uint!(entry, el::SEEK_ID), find_child_uint!(entry, el::SEEK_POSITION));
+    for entry in elem.content().children()?.vec() {
+        let mut data = entry.content().children()?;
+
+        let id = data.find(el::SEEK_ID)
+            .ok_or(error::not_found(el::SEEK_ID))?
+            .content()
+            .into_uint();
+
+        let pos = data.find(el::SEEK_POSITION)
+            .ok_or(error::not_found(el::SEEK_POSITION))?
+            .content()
+            .into_uint();
+
+        entries.insert(id, pos);
     }
 
-    Ok(entries)
+    Ok((entries, count))
 }
 
 /// Read segment information.
-pub fn read_information<R: Read>(ebml: &mut Reader<R>) -> Result<SegmentInfo> {
-    let mut segment_info = SegmentInfo::default();
-    let (elem, _) = ebml.read_element(true)?;
+pub fn read_information<R: Read>(r: &mut R) -> Result<(SegmentInfo, usize)> {
+    let (elem, count) = ebml::reader::read_element(r)?;
 
-    if let Some(uid) = elem.find(el::SEGMENT_UID) {
-        segment_info.uid = Some(uid.data().clone().take()?);
-    }
+    let mut data = elem.content().children()?;
 
-    if let Some(filename) = elem.find(el::SEGMENT_FILENAME) {
-        segment_info.filename = Some(filename.data().to_utf8()?);
-    }
+    let uid = data.find(el::SEGMENT_UID)
+        .map(|elem| elem.content().into_binary());
 
-    segment_info.timecode_scale = find_child_uint_or!(elem, el::TIMECODE_SCALE, 1000000);
+    let filename = data.find(el::SEGMENT_FILENAME)
+        .map_or_else(|| Ok(None), |elem| elem.content().into_utf8().map(|s| Some(s)))?;
 
-    Ok(segment_info)
+    let timecode_scale = data.find(el::TIMECODE_SCALE)
+        .map_or(1000000, |elem| elem.content().into_uint());
+
+    let segment_info = SegmentInfo {
+        uid: uid,
+        filename: filename,
+        timecode_scale: timecode_scale
+    };
+
+    Ok((segment_info, count))
 }

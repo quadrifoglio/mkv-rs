@@ -1,5 +1,7 @@
 //! Error handling functionality.
 
+use std::fmt::Display;
+
 error_chain! {
     errors {
         ElementNotFound(el: u64) {
@@ -23,3 +25,12 @@ error_chain! {
     }
 }
 
+/// Construct an `ElementNotFound` error.
+pub fn not_found(el: u64) -> Error {
+    Error::from(ErrorKind::ElementNotFound(el))
+}
+
+/// Construct an `InvalidElementValue` error.
+pub fn invalid_value<D: Display>(el: u64, val: D) -> Error {
+    Error::from(ErrorKind::InvalidElementValue(el, format!("{}", val)))
+}

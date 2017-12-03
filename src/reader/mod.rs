@@ -9,7 +9,7 @@ use error::{ErrorKind, Result};
 
 /// An object used to read an MKV video.
 pub struct VideoReader<R: Read> {
-    ebml: ebml::reader::Reader<R>
+    reader: R
 }
 
 impl<R: Read> VideoReader<R> {
@@ -17,7 +17,7 @@ impl<R: Read> VideoReader<R> {
     pub fn begin(&mut self) -> Result<()> {
         // First root element: EBM Header.
 
-        let (header, _) = self.ebml.read_element(true)?;
+        let (header, _) = ebml::reader::read_element(&mut self.reader)?;
 
         if header.id() != ebml::header::EBML {
             bail!(ErrorKind::UnexpectedElement(ebml::header::EBML, header.id()));
@@ -25,10 +25,10 @@ impl<R: Read> VideoReader<R> {
 
         // Second root element: MKV Segment.
 
-        let (segment, _) = self.ebml.read_element(false)?;
+        let (segment, _, _) = ebml::reader::read_element_info(&mut self.reader)?;
 
-        if segment.id() != el::SEGMENT {
-            bail!(ErrorKind::UnexpectedElement(el::SEGMENT, segment.id()));
+        if segment != el::SEGMENT {
+            bail!(ErrorKind::UnexpectedElement(el::SEGMENT, segment));
         }
 
         // Parsing the child elements of the MKV Segment. They are called 'Top Level Elements'.
@@ -37,18 +37,27 @@ impl<R: Read> VideoReader<R> {
         // means that we gathered all the metadata. The user can then call `block()` to retreive
         // media data.
 
-        loop {
-            let (top_level_elem, _) = self.ebml.read_element(false)?;
+        'main: loop {
+            let (tle, size, _) = ebml::reader::read_element_info(&mut self.reader)?;
+            let mut count = 0 as usize;
 
-            match top_level_elem.id() {
-                el::SEEK_HEAD => {},
-                el::INFO => {},
-                el::TRACKS => {},
-                el::CLUSTER => break,
-                el::CUES => {},
+            while count < size {
+                match tle {
+                    el::SEEK_HEAD => {
+                        let (_, c) = segment::read_seek_information(&mut self.reader)?;
+                        count += c;
+                    },
 
-                _ => {},
-            };
+                    el::INFO => {
+                        let (_, c) = segment::read_information(&mut self.reader)?;
+                        count += c;
+                    },
+
+                    el::CLUSTER => break 'main,
+
+                    _ => {},
+                };
+            }
         }
 
         Ok(())
@@ -58,49 +67,7 @@ impl<R: Read> VideoReader<R> {
 impl<R: Read> ::std::convert::From<R> for VideoReader<R> {
     fn from(r: R) -> VideoReader<R> {
         VideoReader {
-            ebml: ebml::reader::Reader::from(r),
-        }
-    }
-}
-
-macro_rules! find_child {
-    ($parent:ident, $child:expr) => {
-        if let Some(res) = $parent.find($child) {
-            res
-        } else {
-            bail!($crate::error::ErrorKind::ElementNotFound($child));
-        }
-    }
-}
-
-macro_rules! find_child_uint {
-    ($parent:ident, $child:expr) => {
-        find_child!($parent, $child).data().to_unsigned_int()?
-    }
-}
-
-macro_rules! find_child_utf8 {
-    ($parent:ident, $child:expr) => {
-        find_child!($parent, $child).data().to_utf8()?
-    }
-}
-
-macro_rules! find_child_uint_or {
-    ($parent:ident, $child:expr, $default:expr) => {
-        if let Some(value) = $parent.find($child) {
-            value.data().to_unsigned_int()?
-        } else {
-            $default
-        }
-    }
-}
-
-macro_rules! find_child_float_or {
-    ($parent:ident, $child:expr, $default:expr) => {
-        if let Some(value) = $parent.find($child) {
-            value.data().to_float()?
-        } else {
-            $default
+            reader: r
         }
     }
 }
@@ -108,4 +75,3 @@ macro_rules! find_child_float_or {
 pub mod segment;
 pub mod tracks;
 pub mod cluster;
-pub mod cues;

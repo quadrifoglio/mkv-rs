@@ -2,16 +2,16 @@
 
 use std::io::Read;
 
-use ebml::element::types::*;
-use ebml::reader::Reader;
+use ebml;
+use ebml::common::types::*;
 
-use error::{ErrorKind, Result};
+use error::{self, Result};
 use elements as el;
 
 /// Possible MKV track types.
 pub enum TrackKind {
-    Video(TrackVideo),
-    Audio(TrackAudio),
+    Video(VideoTrack),
+    Audio(AudioTrack),
     Complex,
     Logo,
     Subtitle,
@@ -20,13 +20,13 @@ pub enum TrackKind {
 }
 
 /// Information about a video track.
-pub struct TrackVideo {
+pub struct VideoTrack {
     pub pixel_width: UnsignedInt,
     pub pixel_height: UnsignedInt,
 }
 
 /// Information about an audio track.
-pub struct TrackAudio {
+pub struct AudioTrack {
     pub channels: UnsignedInt,
     pub sampling_freq: Float,
     pub out_sampling_freq: Float
@@ -40,57 +40,70 @@ pub struct Track {
     pub codec_id: Utf8,
 }
 
-/// Initialize the specified EBML reader to make it ready to read MKV track information.
-pub fn init<R: Read>(ebml: &mut Reader<R>) {
-    ebml.register_container(el::TRACKS);
-    ebml.register_container(el::TRACK_ENTRY);
-    ebml.register_container(el::TRACK_TRANSLATE);
-    ebml.register_container(el::VIDEO);
-    ebml.register_container(el::COLOUR);
-    ebml.register_container(el::MASTERING_METADATA);
-    ebml.register_container(el::AUDIO);
-    ebml.register_container(el::TRACK_OPERATION);
-    ebml.register_container(el::TRACK_COMBINE_PLANES);
-    ebml.register_container(el::TRACK_PLANE);
-    ebml.register_container(el::TRACK_JOIN_BLOCKS);
-    ebml.register_container(el::CONTENT_ENCODINGS);
-    ebml.register_container(el::CONTENT_ENCODING);
-    ebml.register_container(el::CONTENT_COMPRESSION);
-    ebml.register_container(el::CONTENT_ENCRYPTION);
-}
-
 /// Read information about all tracks in the MKV source.
-pub fn read_track_information<R: Read>(ebml: &mut Reader<R>) -> Result<Vec<Track>> {
+pub fn read_track_information<R: Read>(r: &mut R) -> Result<Vec<Track>> {
     let mut tracks = Vec::new();
 
-    let (elem, _) = ebml.read_element(true)?;
+    let (elem, _) = ebml::reader::read_element(r)?;
 
-    if elem.id() != el::TRACKS {
-        bail!(ErrorKind::UnexpectedElement(el::TRACKS, elem.id()));
-    }
+    for track_entry in elem.content().children()?.vec() {
+        let mut data = track_entry.content().children()?;
 
-    for entry in elem.children() {
-        let kind = match find_child_uint!(entry, el::TRACK_TYPE) {
+        let number = data.find(el::TRACK_NUMBER)
+            .ok_or(error::not_found(el::TRACK_NUMBER))?
+            .content().into_uint();
+
+        let uid = data.find(el::TRACK_UID)
+            .ok_or(error::not_found(el::TRACK_UID))?
+            .content().into_uint();
+
+        let codec_id = data.find(el::CODEC_ID)
+            .ok_or(error::not_found(el::CODEC_ID))?
+            .content().into_utf8()?;
+
+        let track_type = data.find(el::TRACK_TYPE)
+            .ok_or(error::not_found(el::TRACK_TYPE))?
+            .content().into_uint();
+
+        
+        let kind = match track_type {
             0x01 => {
-                let video = find_child!(entry, el::VIDEO);
+                let mut video = data.find(el::VIDEO)
+                    .ok_or(error::not_found(el::VIDEO))?
+                    .content().children()?;
 
-                TrackKind::Video(TrackVideo {
-                    pixel_width: find_child_uint!(video, el::PIXEL_WIDTH),
-                    pixel_height: find_child_uint!(video, el::PIXEL_HEIGHT),
+                let pw = video.find(el::PIXEL_WIDTH)
+                    .ok_or(error::not_found(el::PIXEL_WIDTH))?
+                    .content().into_uint();
+
+                let ph = video.find(el::PIXEL_HEIGHT)
+                    .ok_or(error::not_found(el::PIXEL_HEIGHT))?
+                    .content().into_uint();
+
+                TrackKind::Video(VideoTrack {
+                    pixel_width: pw,
+                    pixel_height: ph,
                 })
             },
 
             0x02 => {
-                let audio = find_child!(entry, el::AUDIO);
+                let mut audio = data.find(el::AUDIO)
+                    .ok_or(error::not_found(el::AUDIO))?
+                    .content().children()?;
 
-                let channels = find_child_uint_or!(audio, el::CHANNELS, 1);
-                let sampling_freq = find_child_float_or!(audio, el::SAMPLING_FREQUENCY, 8000.0);
-                let out_sampling_freq = find_child_float_or!(audio, el::OUTPUT_SAMPLING_FREQUENCY, sampling_freq);
+                let channels = audio.find(el::CHANNELS)
+                    .map_or(1, |elem| elem.content().into_uint());
 
-                TrackKind::Audio(TrackAudio {
+                let sampling_freq = audio.find(el::SAMPLING_FREQUENCY)
+                    .map_or(8000.0, |elem| elem.content().into_float());
+
+                let out_sampling_freq = audio.find(el::OUTPUT_SAMPLING_FREQUENCY)
+                    .map_or(sampling_freq, |elem| elem.content().into_float());
+
+                TrackKind::Audio(AudioTrack {
                     channels: channels,
                     sampling_freq: sampling_freq,
-                    out_sampling_freq: out_sampling_freq
+                    out_sampling_freq: out_sampling_freq,
                 })
             },
 
@@ -100,13 +113,13 @@ pub fn read_track_information<R: Read>(ebml: &mut Reader<R>) -> Result<Vec<Track
             0x12 => TrackKind::Buttons,
             0x20 => TrackKind::Control,
 
-            wtf => bail!(ErrorKind::InvalidElementValue(el::TRACK_TYPE, format!("{}", wtf))),
+            wtf => bail!(error::invalid_value(el::TRACK_TYPE, wtf)),
         };
 
         tracks.push(Track {
-            number: find_child_uint!(entry, el::TRACK_NUMBER),
-            uid: find_child_uint!(entry, el::TRACK_UID),
-            codec_id: find_child_utf8!(entry, el::CODEC_ID),
+            number: number,
+            uid: uid,
+            codec_id: codec_id,
             kind: kind,
         });
     }
