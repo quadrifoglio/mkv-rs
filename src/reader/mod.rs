@@ -87,8 +87,6 @@ impl<R: Read> VideoReader<R> {
             let mut count = 0 as usize;
 
             while count < size {
-                println!("TLE: 0x{:X}", tle);
-
                 match tle {
                     el::SEEK_HEAD => {
                         let (data, c) = ebml::reader::read_element_data(&mut self.reader, size)?;
