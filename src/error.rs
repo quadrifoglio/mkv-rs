@@ -30,6 +30,11 @@ pub fn not_found(el: u64) -> Error {
     Error::from(ErrorKind::ElementNotFound(el))
 }
 
+/// Construct an `UnexpectedElement` error.
+pub fn unexpected(expected: u64, got: u64) -> Error {
+    Error::from(ErrorKind::UnexpectedElement(expected, got))
+}
+
 /// Construct an `InvalidElementValue` error.
 pub fn invalid_value<D: Display>(el: u64, val: D) -> Error {
     Error::from(ErrorKind::InvalidElementValue(el, format!("{}", val)))

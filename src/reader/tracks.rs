@@ -21,23 +21,70 @@ pub enum TrackKind {
 
 /// Information about a video track.
 pub struct VideoTrack {
-    pub pixel_width: UnsignedInt,
-    pub pixel_height: UnsignedInt,
+    pixel_width: UnsignedInt,
+    pixel_height: UnsignedInt,
+}
+
+impl VideoTrack {
+    /// Return the width in pixel of this video track.
+    pub fn width(&self) -> UnsignedInt {
+        self.pixel_width
+    }
+
+    /// Return the height in pixel of this video track.
+    pub fn height(&self) -> UnsignedInt {
+        self.pixel_height
+    }
 }
 
 /// Information about an audio track.
 pub struct AudioTrack {
-    pub channels: UnsignedInt,
-    pub sampling_freq: Float,
-    pub out_sampling_freq: Float
+    channels: UnsignedInt,
+    sampling_freq: Float,
+    out_sampling_freq: Float
+}
+
+impl AudioTrack {
+    /// Return the number of channels that this track is composed of.
+    pub fn channel_count(&self) -> UnsignedInt {
+        self.channels
+    }
+
+    /// Return the sampling frequency of the audio samples of this track.
+    pub fn sampling_frequency(&self) -> Float {
+        self.out_sampling_freq
+    }
 }
 
 /// Contains parsed information about an MKV track.
 pub struct Track {
-    pub number: UnsignedInt,
-    pub uid: UnsignedInt,
-    pub kind: TrackKind,
-    pub codec_id: Utf8,
+    number: UnsignedInt,
+    uid: UnsignedInt,
+    kind: TrackKind,
+    codec_id: Utf8,
+}
+
+impl Track {
+    /// Return the number of this track.
+    pub fn number(&self) -> UnsignedInt {
+        self.number
+    }
+
+    /// Return the UID of this track.
+    pub fn uid(&self) -> UnsignedInt {
+        self.uid
+    }
+
+    /// Return the type of this track (Audio, Video, Subtitle...) and associated domain-specific
+    /// information.
+    pub fn kind<'a>(&'a self) -> &'a TrackKind {
+        &self.kind
+    }
+
+    /// Returns a string that identifies the codec of this track.
+    pub fn codec<'a>(&'a self) -> &'a str {
+        self.codec_id.as_str()
+    }
 }
 
 /// Read information about all tracks in the MKV source.

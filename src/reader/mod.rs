@@ -5,7 +5,43 @@ use std::io::Read;
 use ebml;
 
 use elements as el;
-use error::{ErrorKind, Result};
+use error::{self, Result};
+use reader::segment::SegmentInfo;
+use reader::tracks::Track;
+
+/// Contains global information about an MKV media source.
+#[derive(Default)]
+pub struct Info {
+    doc_type: String,
+    segment: SegmentInfo,
+    tracks: Vec<Track>,
+}
+
+impl Info {
+    /// Return a string representing the DocType of this media file.
+    pub fn doc_type<'a>(&'a self) -> &'a str{
+        self.doc_type.as_str()
+    }
+
+    /// Return the UID of the MKV segment, if any.
+    pub fn segment_uid<'a>(&'a self) -> Option<&'a Vec<u8>> {
+        if let Some(ref uid) = self.segment.uid {
+            return Some(uid);
+        }
+
+        None
+    }
+
+    /// Return the timestamp scale in nanoseconds (TimecodeScale element value).
+    pub fn timecode_scale(&self) -> u64 {
+        self.segment.timecode_scale
+    }
+
+    /// Returns the list of tracks contained within this MKV media source.
+    pub fn tracks<'a>(&'a self) -> &'a Vec<Track> {
+        &self.tracks
+    }
+}
 
 /// An object used to read an MKV video.
 pub struct VideoReader<R: Read> {
@@ -13,22 +49,31 @@ pub struct VideoReader<R: Read> {
 }
 
 impl<R: Read> VideoReader<R> {
-    /// Start the reading & parsing of the media.
-    pub fn begin(&mut self) -> Result<()> {
+    /// Read information about the media. Parses the EBML header as well as segment and track
+    /// informations, but does not read any block.
+    pub fn info(&mut self) -> Result<Info> {
+        let mut info = Info::default();
+
         // First root element: EBM Header.
 
         let (header, _) = ebml::reader::read_element(&mut self.reader)?;
 
         if header.id() != ebml::header::EBML {
-            bail!(ErrorKind::UnexpectedElement(ebml::header::EBML, header.id()));
+            bail!(error::unexpected(ebml::header::EBML, header.id()));
         }
+
+        let mut header_fields = header.content().children()?;
+
+        info.doc_type = header_fields.find(ebml::header::DOC_TYPE)
+            .ok_or(error::not_found(ebml::header::DOC_TYPE))?
+            .content().into_utf8()?;
 
         // Second root element: MKV Segment.
 
         let (segment, _, _) = ebml::reader::read_element_info(&mut self.reader)?;
 
         if segment != el::SEGMENT {
-            bail!(ErrorKind::UnexpectedElement(el::SEGMENT, segment));
+            bail!(error::unexpected(el::SEGMENT, segment));
         }
 
         // Parsing the child elements of the MKV Segment. They are called 'Top Level Elements'.
@@ -49,13 +94,17 @@ impl<R: Read> VideoReader<R> {
                     },
 
                     el::INFO => {
-                        let (_, c) = segment::read_information(&mut self.reader)?;
+                        let (segment, c) = segment::read_information(&mut self.reader)?;
                         count += c;
+
+                        info.segment = segment;
                     },
 
                     el::TRACKS => {
-                        let (_, c) = tracks::read_track_information(&mut self.reader)?;
+                        let (tracks, c) = tracks::read_track_information(&mut self.reader)?;
                         count += c;
+
+                        info.tracks = tracks;
                     },
 
                     el::CLUSTER => break 'main,
@@ -67,7 +116,7 @@ impl<R: Read> VideoReader<R> {
             }
         }
 
-        Ok(())
+        Ok(info)
     }
 }
 

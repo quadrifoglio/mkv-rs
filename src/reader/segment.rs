@@ -15,9 +15,9 @@ pub type SeekEntries = HashMap<ElementId, UnsignedInt>;
 /// Contains parsed information about an MKV segment.
 #[derive(Default)]
 pub struct SegmentInfo {
-    pub uid: Option<Binary>,
-    pub filename: Option<Utf8>,
-    pub timecode_scale: UnsignedInt
+    pub(crate) uid: Option<Binary>,
+    pub(crate) filename: Option<Utf8>,
+    pub(crate) timecode_scale: UnsignedInt
 }
 
 /// Read seeking information. Returns a map of Elements to their position in the file.
