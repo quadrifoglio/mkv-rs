@@ -138,10 +138,10 @@ pub fn read_track_information(track_info: EbmlElementArray) -> Result<Vec<Track>
                     .map_or(1, |elem| elem.content().into_uint());
 
                 let sampling_freq = audio.find(el::SAMPLING_FREQUENCY)
-                    .map_or(8000.0, |elem| elem.content().into_float());
+                    .map_or_else(|| Ok(8000.0), |elem| elem.content().into_float())?;
 
                 let out_sampling_freq = audio.find(el::OUTPUT_SAMPLING_FREQUENCY)
-                    .map_or(sampling_freq, |elem| elem.content().into_float());
+                    .map_or_else(|| Ok(sampling_freq), |elem| elem.content().into_float())?;
 
                 TrackKind::Audio(AudioTrack {
                     channels: channels,
