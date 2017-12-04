@@ -1,10 +1,9 @@
 //! MKV Segment reading (Meta Seek Information & Segment Information).
 
-use std::io::Read;
 use std::collections::HashMap;
 
-use ebml;
 use ebml::common::types::*;
+use ebml::common::ElementArray as EbmlElementArray;
 
 use error::{self, Result};
 use elements as el;
@@ -21,11 +20,10 @@ pub struct SegmentInfo {
 }
 
 /// Read seeking information. Returns a map of Elements to their position in the file.
-pub fn read_seek_information<R: Read>(r: &mut R) -> Result<(SeekEntries, usize)> {
+pub fn read_seek_information(seek_data: EbmlElementArray) -> Result<SeekEntries> {
     let mut entries = HashMap::new();
-    let (elem, count) = ebml::reader::read_element(r)?;
 
-    for entry in elem.content().children()?.vec() {
+    for entry in seek_data.vec() {
         let mut data = entry.content().children()?;
 
         let id = data.find(el::SEEK_ID)
@@ -41,22 +39,18 @@ pub fn read_seek_information<R: Read>(r: &mut R) -> Result<(SeekEntries, usize)>
         entries.insert(id, pos);
     }
 
-    Ok((entries, count))
+    Ok(entries)
 }
 
 /// Read segment information.
-pub fn read_information<R: Read>(r: &mut R) -> Result<(SegmentInfo, usize)> {
-    let (elem, count) = ebml::reader::read_element(r)?;
-
-    let mut data = elem.content().children()?;
-
-    let uid = data.find(el::SEGMENT_UID)
+pub fn read_information(mut segment_info: EbmlElementArray) -> Result<SegmentInfo> {
+    let uid = segment_info.find(el::SEGMENT_UID)
         .map(|elem| elem.content().into_binary());
 
-    let filename = data.find(el::SEGMENT_FILENAME)
+    let filename = segment_info.find(el::SEGMENT_FILENAME)
         .map_or_else(|| Ok(None), |elem| elem.content().into_utf8().map(|s| Some(s)))?;
 
-    let timecode_scale = data.find(el::TIMECODE_SCALE)
+    let timecode_scale = segment_info.find(el::TIMECODE_SCALE)
         .map_or(1000000, |elem| elem.content().into_uint());
 
     let segment_info = SegmentInfo {
@@ -65,5 +59,5 @@ pub fn read_information<R: Read>(r: &mut R) -> Result<(SegmentInfo, usize)> {
         timecode_scale: timecode_scale
     };
 
-    Ok((segment_info, count))
+    Ok(segment_info)
 }

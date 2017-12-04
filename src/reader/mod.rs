@@ -87,30 +87,37 @@ impl<R: Read> VideoReader<R> {
             let mut count = 0 as usize;
 
             while count < size {
+                println!("TLE: 0x{:X}", tle);
+
                 match tle {
                     el::SEEK_HEAD => {
-                        let (_, c) = segment::read_seek_information(&mut self.reader)?;
+                        let (data, c) = ebml::reader::read_element_data(&mut self.reader, size)?;
                         count += c;
+
+                        let _ = segment::read_seek_information(data.children()?)?;
                     },
 
                     el::INFO => {
-                        let (segment, c) = segment::read_information(&mut self.reader)?;
+                        let (data, c) = ebml::reader::read_element_data(&mut self.reader, size)?;
                         count += c;
 
+                        let segment = segment::read_information(data.children()?)?;
                         info.segment = segment;
                     },
 
                     el::TRACKS => {
-                        let (tracks, c) = tracks::read_track_information(&mut self.reader)?;
+                        let (data, c) = ebml::reader::read_element_data(&mut self.reader, size)?;
                         count += c;
 
+                        let tracks = tracks::read_track_information(data.children()?)?;
                         info.tracks = tracks;
                     },
 
                     el::CLUSTER => break 'main,
 
                     _ => {
-                        let _ = ebml::reader::read_element_data(&mut self.reader, size)?;
+                        let (_, c) = ebml::reader::read_element_data(&mut self.reader, size)?;
+                        count += c;
                     },
                 };
             }

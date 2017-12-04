@@ -1,9 +1,7 @@
 //! MKV Track information reading.
 
-use std::io::Read;
-
-use ebml;
 use ebml::common::types::*;
+use ebml::common::ElementArray as EbmlElementArray;
 
 use error::{self, Result};
 use elements as el;
@@ -88,12 +86,10 @@ impl Track {
 }
 
 /// Read information about all tracks in the MKV source.
-pub fn read_track_information<R: Read>(r: &mut R) -> Result<(Vec<Track>, usize)> {
+pub fn read_track_information(track_info: EbmlElementArray) -> Result<Vec<Track>> {
     let mut tracks = Vec::new();
 
-    let (elem, count) = ebml::reader::read_element(r)?;
-
-    for track_entry in elem.content().children()?.vec() {
+    for track_entry in track_info.vec() {
         let mut data = track_entry.content().children()?;
 
         let number = data.find(el::TRACK_NUMBER)
@@ -171,5 +167,5 @@ pub fn read_track_information<R: Read>(r: &mut R) -> Result<(Vec<Track>, usize)>
         });
     }
 
-    Ok((tracks, count))
+    Ok(tracks)
 }
