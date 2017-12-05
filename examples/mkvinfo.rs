@@ -29,4 +29,14 @@ fn main() {
             _ => {},
         }
     }
+
+    loop {
+        let block = reader.block().unwrap();
+
+        if block.is_none() {
+            break;
+        }
+
+        println!("Found block. Size: {} bytes", block.unwrap().size());
+    }
 }
