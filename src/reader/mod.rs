@@ -1,5 +1,9 @@
 //! This module contains the functionality to read and parse MKV elements.
 
+pub mod segment;
+pub mod tracks;
+pub mod cluster;
+
 use std::io::Read;
 
 use ebml;
@@ -160,7 +164,3 @@ impl<R: Read> ::std::convert::From<R> for VideoReader<R> {
         }
     }
 }
-
-pub mod segment;
-pub mod tracks;
-pub mod cluster;
