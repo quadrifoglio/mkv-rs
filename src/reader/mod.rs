@@ -12,7 +12,7 @@ use elements as el;
 use error::{self, Result};
 use reader::segment::SegmentInfo;
 use reader::tracks::Track;
-use reader::cluster::{Cluster, Block};
+use reader::cluster::Cluster;
 
 /// Contains global information about an MKV media source.
 #[derive(Default)]
@@ -51,7 +51,7 @@ impl Info {
 /// An object used to read an MKV video.
 pub struct VideoReader<R: Read> {
     reader: R,
-    current_cluster: Option<Cluster>,
+    first_cluster: Option<Cluster>,
 }
 
 impl<R: Read> VideoReader<R> {
@@ -118,7 +118,9 @@ impl<R: Read> VideoReader<R> {
                     },
 
                     el::CLUSTER => {
-                        self.current_cluster = Some(Cluster::new(size));
+                        let (cluster, _) = cluster::read_cluster(&mut self.reader, size)?;
+                        self.first_cluster = Some(cluster);
+
                         break 'main;
                     },
 
@@ -133,26 +135,20 @@ impl<R: Read> VideoReader<R> {
         Ok(info)
     }
 
-    pub fn block(&mut self) -> Result<Option<Block>> {
-        if self.current_cluster.is_none() {
-            let (id, size, _) = ebml::reader::read_element_info(&mut self.reader)?;
-
-            if id != el::CLUSTER {
-                return Ok(None);
-            }
-
-            self.current_cluster = Some(Cluster::new(size));
+    pub fn cluster(&mut self) -> Result<Option<Cluster>> {
+        if self.first_cluster.is_some() {
+            let cluster = self.first_cluster.take().unwrap();
+            return Ok(Some(cluster));
         }
 
-        if self.current_cluster.as_ref().unwrap().is_done() {
-            self.current_cluster = None;
+        let (id, size, _) = ebml::reader::read_element_info(&mut self.reader)?;
+
+        if id != el::CLUSTER {
             return Ok(None);
         }
 
-        let cluster = self.current_cluster.as_mut().unwrap();
-        let (block, _) = cluster::read_block(&mut self.reader, cluster)?;
-
-        Ok(Some(block))
+        let (cluster, _) = cluster::read_cluster(&mut self.reader, size)?;
+        Ok(Some(cluster))
     }
 }
 
@@ -160,7 +156,7 @@ impl<R: Read> ::std::convert::From<R> for VideoReader<R> {
     fn from(r: R) -> VideoReader<R> {
         VideoReader {
             reader: r,
-            current_cluster: None,
+            first_cluster: None,
         }
     }
 }

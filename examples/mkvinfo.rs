@@ -30,8 +30,10 @@ fn main() {
         }
     }
 
+    let cluster = reader.cluster().unwrap().unwrap();
+
     loop {
-        let block = reader.block().unwrap();
+        let block = cluster.block().unwrap();
 
         if block.is_none() {
             break;
