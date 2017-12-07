@@ -35,7 +35,7 @@ impl Cluster {
     }
 
     /// Read the next block of data from that cluster.
-    pub fn block<R: Read>(&mut self, r: &mut R) -> Result<Option<Block>> {
+    pub(crate) fn block<R: Read>(&mut self, r: &mut R) -> Result<Option<Block>> {
         if self.first_block.is_some() {
             let (kind, content) = self.first_block.take().unwrap();
 

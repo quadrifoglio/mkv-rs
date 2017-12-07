@@ -30,10 +30,10 @@ fn main() {
         }
     }
 
-    let cluster = reader.cluster().unwrap().unwrap();
+    let mut cluster = reader.cluster().unwrap().unwrap();
 
     loop {
-        let block = cluster.block().unwrap();
+        let block = reader.block(&mut cluster).unwrap();
 
         if block.is_none() {
             break;

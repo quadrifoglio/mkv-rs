@@ -12,7 +12,7 @@ use elements as el;
 use error::{self, Result};
 use reader::segment::SegmentInfo;
 use reader::tracks::Track;
-use reader::cluster::Cluster;
+use reader::cluster::{Cluster, Block};
 
 /// Contains global information about an MKV media source.
 #[derive(Default)]
@@ -149,6 +149,10 @@ impl<R: Read> VideoReader<R> {
 
         let (cluster, _) = cluster::read_cluster(&mut self.reader, size)?;
         Ok(Some(cluster))
+    }
+
+    pub fn block(&mut self, cluster: &mut Cluster) -> Result<Option<Block>> {
+        cluster.block(&mut self.reader)
     }
 }
 
