@@ -208,3 +208,15 @@ pub const REFERENCE_FRAME: UnsignedInt = 0xC8;
 pub const REFERENCE_OFFSET: UnsignedInt = 0xC9;
 pub const REFERENCE_TIMECODE: UnsignedInt = 0xCA;
 pub const ENCRYPTED_BLOCK: UnsignedInt = 0xAF;
+
+// Attachements.
+
+pub const ATTACHEMENTS: UnsignedInt = 0x1941A469;
+
+// Chapters.
+
+pub const CHAPTERS: UnsignedInt = 0x1043A770;
+
+// Tagging.
+
+pub const TAGS: UnsignedInt = 0x1254C367;
