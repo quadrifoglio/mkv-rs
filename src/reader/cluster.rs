@@ -7,7 +7,7 @@ use self::libebml::common::types::*;
 use self::libebml::common::ElementArray;
 
 use elements as el;
-use error::{self, Result};
+use error::{self, Error, Result};
 
 /// Represents a matroska cluster.
 pub struct Cluster<'a, R: Read + 'a> {
@@ -25,22 +25,50 @@ impl<'a, R: Read + 'a> Cluster<'a, R> {
         }
     }
 
-    pub fn block(&mut self) -> Result<Option<Block>> {
-        while self.pos < self.size {
-            let (elem, c) = libebml::reader::read_element(&mut self.r)?;
-            self.pos += c;
+    /// Return an iterator over all the data blocks in the cluster.
+    pub fn blocks(&'a mut self) -> Blocks<'a, R> {
+        Blocks {
+            cluster: self,
+        }
+    }
+}
+
+/// Iterator over Blocks.
+pub struct Blocks<'a, R: Read + 'a> {
+    cluster: &'a mut Cluster<'a, R>,
+}
+
+impl<'a, R: Read + 'a> ::std::iter::Iterator for Blocks<'a, R> {
+    type Item = Result<Block>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.cluster.pos < self.cluster.size {
+            let (elem, c) = match libebml::reader::read_element(&mut self.cluster.r) {
+                Ok((elem, c)) => (elem, c),
+                Err(err) => return Some(Err(Error::from(err))),
+            };
+
+            self.cluster.pos += c;
 
             match elem.id() {
                 el::TIMECODE | el::SILENT_TRACKS | el::POSITION | el::PREV_SIZE | el::ENCRYPTED_BLOCK => continue,
 
-                el::SIMPLE_BLOCK => return Ok(Some(simple_block(elem.content().into_binary())?)),
-                el::BLOCK_GROUP => return Ok(Some(block_group(elem.content().children()?)?)),
+                el::SIMPLE_BLOCK => return Some(simple_block(elem.content().into_binary())),
 
-                wtf => bail!(error::unexpected(el::SIMPLE_BLOCK, wtf)),
+                el::BLOCK_GROUP => {
+                    let elems = match elem.content().children() {
+                        Ok(elems) => elems,
+                        Err(err) => return Some(Err(Error::from(err))),
+                    };
+
+                    return Some(block_group(elems));
+                },
+
+                wtf => return Some(Err(error::unexpected(el::SIMPLE_BLOCK, wtf))),
             };
         }
 
-        Ok(None)
+        None
     }
 }
 

@@ -33,18 +33,18 @@ fn main() {
     }
 
     loop {
-        let mut cluster = video.cluster().unwrap();
-        if cluster.is_none() {
-            break;
-        }
+        let mut cluster = match video.cluster() {
+            Ok(cluster) => match cluster {
+                Some(cluster) => cluster,
+                None => break,
+            },
 
-        loop {
-            let block = cluster.as_mut().unwrap().block().unwrap();
-            if block.is_none() {
-                break;
-            }
+            Err(err) => panic!(err),
+        };
 
-            println!("Found data block: {} bytes", block.unwrap().size());
+        for block in cluster.blocks() {
+            let block = block.unwrap();
+            println!("Found data block: {} bytes", block.size());
         }
     }
 }
