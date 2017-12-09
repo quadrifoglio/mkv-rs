@@ -32,16 +32,7 @@ fn main() {
         };
     }
 
-    loop {
-        let mut cluster = match video.cluster() {
-            Ok(cluster) => match cluster {
-                Some(cluster) => cluster,
-                None => break,
-            },
-
-            Err(err) => panic!(err),
-        };
-
+    while let Some(mut cluster) = video.next_cluster().unwrap() {
         for block in cluster.blocks() {
             let block = block.unwrap();
             println!("Found data block: {} bytes", block.size());

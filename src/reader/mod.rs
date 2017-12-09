@@ -81,27 +81,36 @@ impl<R: Read> Reader<R> {
         Ok(info)
     }
 
-    pub fn cluster<'a>(&'a mut self) -> Result<Option<Cluster<'a, R>>> {
-        let size: usize;
+    /// Read the next matroska cluster. Returns `None` if there is no more to read.
+    pub fn next_cluster<'a>(&'a mut self) -> Result<Option<Cluster<'a, R>>> {
+        // If a cluster size has already been read & stored, use it. Otherwise, find the next
+        // cluster's size by reading the next EBML element.
 
-        if self.stored_cluster_size.is_none() {
-            let (id, s, c) = libebml::reader::read_element_info(&mut self.r)?;
-            if c == 0 {
-                return Ok(None);
-            }
+        let size = match self.stored_cluster_size {
+            Some(_) => self.stored_cluster_size.take().unwrap(),
 
-            if id == el::CLUSTER {
-                size = s;
-            } else {
-                // TODO: Process the data that comes after the cluster. Right now it is just
-                // ignored.
+            None => {
+                // Read the next EBML element. If it is a cluster, we can go on reading cluster data.
+                // If not, then we return `None` to stop the iteration process.
 
-                libebml::reader::read_element_data(&mut self.r, s)?;
-                return Ok(None);
-            }
-        } else {
-            size = self.stored_cluster_size.take().unwrap();
-        }
+                let (id, s, c) = libebml::reader::read_element_info(&mut self.r)?;
+                if c == 0 {
+                    return Ok(None);
+                }
+
+                match id {
+                    // Found another cluster. Get its size in bytes.
+                    el::CLUSTER => s,
+
+                    // Found some other element, skip it for now.
+                    // TODO: Handle elements that comes after clusters.
+                    _ => {
+                        libebml::reader::read_element_data(&mut self.r, s)?;
+                        return Ok(None);
+                    },
+                }
+            },
+        };
 
         Ok(Some(Cluster::new(&mut self.r, size)))
     }
