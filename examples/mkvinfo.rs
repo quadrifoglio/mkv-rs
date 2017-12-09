@@ -13,6 +13,8 @@ fn main() {
 
     let mut video = Reader::from(file);
 
+    // Read header metadata: all the information that preceed the actual data blocks.
+
     for info in video.info().unwrap() {
         match info {
             Info::Ebml(header) => println!("Document Type: {}", header.doc_type),
@@ -31,6 +33,8 @@ fn main() {
             },
         };
     }
+
+    // Read all the data blocks in the file.
 
     while let Some(mut cluster) = video.next_cluster().unwrap() {
         for block in cluster.blocks() {
