@@ -9,17 +9,19 @@ use self::libebml::common::ElementArray;
 use elements as el;
 use error::{self, Error, Result};
 
+use super::Reader;
+
 /// Represents a matroska cluster.
 pub struct Cluster<'a, R: Read + 'a> {
-    r: &'a mut R,
+    reader: &'a mut Reader<R>,
     pos: usize,
     size: usize,
 }
 
 impl<'a, R: Read + 'a> Cluster<'a, R> {
-    pub(crate) fn new(r: &'a mut R, size: usize) -> Cluster<'a, R> {
+    pub(crate) fn new(reader: &'a mut Reader<R>, size: usize) -> Cluster<'a, R> {
         Cluster {
-            r: r,
+            reader: reader,
             pos: 0,
             size: size,
         }
@@ -43,12 +45,13 @@ impl<'a, R: Read + 'a> ::std::iter::Iterator for Blocks<'a, R> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.cluster.pos < self.cluster.size {
-            let (elem, c) = match libebml::reader::read_element(&mut self.cluster.r) {
+            let (elem, c) = match libebml::reader::read_element(&mut self.cluster.reader.r) {
                 Ok((elem, c)) => (elem, c),
                 Err(err) => return Some(Err(Error::from(err))),
             };
 
             self.cluster.pos += c;
+            self.cluster.reader.segment_position += c;
 
             match elem.id() {
                 el::TIMECODE | el::SILENT_TRACKS | el::POSITION | el::PREV_SIZE | el::ENCRYPTED_BLOCK => continue,

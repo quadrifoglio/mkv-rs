@@ -11,13 +11,31 @@ fn main() {
     let path = ::std::env::args().nth(1).expect("Please specify a filename");
     let file = File::open(path).unwrap();
 
-    let mut video = Reader::from(file);
+    let mut video = Reader::new(file).unwrap();
 
-    // Read header metadata: all the information that preceed the actual data blocks.
+    println!("Document Type: {}", video.header().doc_type());
+    println!("Document Type Version: {}", video.header().doc_type_version());
+    println!("Document Type Read Version: {}", video.header().doc_type_read_version());
 
-    for info in video.info().unwrap() {
+    // Read metadata: all the information that preceed the actual data blocks.
+    print_info(video.info().unwrap());
+
+    // Read all the data blocks in the file.
+    while let Some(mut cluster) = video.next_cluster().unwrap() {
+        for block in cluster.blocks() {
+            let block = block.unwrap();
+            println!("Found data block: {} bytes", block.size());
+        }
+    }
+
+    // Read the information that is located after the clusters.
+    print_info(video.info().unwrap());
+}
+
+/// Prints matroska metadata to stdout.
+fn print_info(infos: Vec<Info>) {
+    for info in infos {
         match info {
-            Info::Ebml(header) => println!("Document Type: {}", header.doc_type),
             Info::Segment(segment) => println!("Segment with a TimecodeScale of {}", segment.timecode_scale),
 
             Info::MetaSeek(ref seek_entries) => {
@@ -32,14 +50,5 @@ fn main() {
                 }
             },
         };
-    }
-
-    // Read all the data blocks in the file.
-
-    while let Some(mut cluster) = video.next_cluster().unwrap() {
-        for block in cluster.blocks() {
-            let block = block.unwrap();
-            println!("Found data block: {} bytes", block.size());
-        }
     }
 }
