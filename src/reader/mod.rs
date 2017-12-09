@@ -4,6 +4,7 @@ pub mod ebml;
 pub mod meta_seek;
 pub mod segment;
 pub mod track;
+pub mod cluster;
 
 use std::io::Read;
 
@@ -11,6 +12,8 @@ use ::ebml as libebml;
 
 use elements as el;
 use error::{self, Result};
+
+use self::cluster::Cluster;
 
 /// Represents the different kinds of informative data that can be in a matroska file.
 /// Contrary to `Block` data, `Info` does not contain any media data, only metadata.
@@ -24,6 +27,7 @@ pub enum Info {
 /// High-level object that provides access to the different sections of the matroska file.
 pub struct Reader<R: Read> {
     r: R,
+    stored_cluster_size: Option<usize>,
 }
 
 impl<R: Read> Reader<R> {
@@ -65,7 +69,10 @@ impl<R: Read> Reader<R> {
                 }
 
                 // Found the first cluster: information reading is done.
-                el::CLUSTER => break,
+                el::CLUSTER => {
+                    self.stored_cluster_size = Some(size);
+                    break;
+                },
 
                 wtf => bail!(error::unexpected(libebml::header::EBML, wtf)),
             };
@@ -73,12 +80,38 @@ impl<R: Read> Reader<R> {
 
         Ok(info)
     }
+
+    pub fn cluster<'a>(&'a mut self) -> Result<Option<Cluster<'a, R>>> {
+        let size: usize;
+
+        if self.stored_cluster_size.is_none() {
+            let (id, s, c) = libebml::reader::read_element_info(&mut self.r)?;
+            if c == 0 {
+                return Ok(None);
+            }
+
+            if id == el::CLUSTER {
+                size = s;
+            } else {
+                // TODO: Process the data that comes after the cluster. Right now it is just
+                // ignored.
+
+                libebml::reader::read_element_data(&mut self.r, s)?;
+                return Ok(None);
+            }
+        } else {
+            size = self.stored_cluster_size.take().unwrap();
+        }
+
+        Ok(Some(Cluster::new(&mut self.r, size)))
+    }
 }
 
 impl<R: Read> ::std::convert::From<R> for Reader<R> {
     fn from(r: R) -> Reader<R> {
         Reader {
             r: r,
+            stored_cluster_size: None,
         }
     }
 }

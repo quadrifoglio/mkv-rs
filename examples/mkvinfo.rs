@@ -31,4 +31,20 @@ fn main() {
             },
         };
     }
+
+    loop {
+        let mut cluster = video.cluster().unwrap();
+        if cluster.is_none() {
+            break;
+        }
+
+        loop {
+            let block = cluster.as_mut().unwrap().block().unwrap();
+            if block.is_none() {
+                break;
+            }
+
+            println!("Found data block: {} bytes", block.unwrap().size());
+        }
+    }
 }
