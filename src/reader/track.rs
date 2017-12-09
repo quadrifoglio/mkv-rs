@@ -19,23 +19,74 @@ pub enum Kind {
 
 /// Information about a video track.
 pub struct Video {
-    pub pixel_width: UnsignedInt,
-    pub pixel_height: UnsignedInt,
+    pixel_width: UnsignedInt,
+    pixel_height: UnsignedInt,
+}
+
+impl Video {
+    /// Width of the video track in pixels.
+    pub fn width(&self) -> u64 {
+        self.pixel_width
+    }
+
+    /// Height of the video track in pixels.
+    pub fn height(&self) -> u64 {
+        self.pixel_height
+    }
 }
 
 /// Information about an audio track.
 pub struct Audio {
-    pub channels: UnsignedInt,
-    pub sampling_freq: Float,
-    pub out_sampling_freq: Float
+    channels: UnsignedInt,
+    sampling_freq: Float,
+    out_sampling_freq: Float
+}
+
+impl Audio {
+    /// Number of audio channels.
+    pub fn channels(&self) -> u64 {
+        self.channels
+    }
+
+    /// Audio sampling frequency in hertz.
+    pub fn sampling_frequency(&self) -> f64 {
+        self.sampling_freq
+    }
+
+    /// Output audio sampling frequency in hertz.
+    pub fn output_sampling_frequenct(&self) -> f64 {
+        self.out_sampling_freq
+    }
 }
 
 /// Contains parsed information about a matroka track.
 pub struct Info {
-    pub number: UnsignedInt,
-    pub uid: UnsignedInt,
-    pub kind: Kind,
-    pub codec_id: Utf8,
+    number: UnsignedInt,
+    uid: UnsignedInt,
+    kind: Kind,
+    codec_id: Utf8,
+}
+
+impl Info {
+    /// Index number of the track.
+    pub fn index(&self) -> u64 {
+        self.number
+    }
+
+    /// Uinique identifier of the track.
+    pub fn uid(&self) -> u64 {
+        self.uid
+    }
+
+    /// Domain-specific track type and associated data.
+    pub fn kind(&self) -> &Kind {
+        &self.kind
+    }
+
+    /// String identifier of the codec of the track.
+    pub fn codec(&self) -> &str {
+        self.codec_id.as_str()
+    }
 }
 
 /// Read information about all tracks in the matroska file. Expected input: children of the

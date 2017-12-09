@@ -36,7 +36,7 @@ fn main() {
 fn print_info(infos: Vec<Info>) {
     for info in infos {
         match info {
-            Info::Segment(segment) => println!("Segment with a TimecodeScale of {}", segment.timecode_scale),
+            Info::Segment(segment) => println!("Segment with a TimecodeScale of {}", segment.timecode_scale()),
 
             Info::MetaSeek(ref seek_entries) => {
                 for (elem_id, elem_pos) in seek_entries {
@@ -46,7 +46,7 @@ fn print_info(infos: Vec<Info>) {
 
             Info::Tracks(ref tracks) => {
                 for track in tracks {
-                    println!("Track n°{} - Codec: {}", track.number, track.codec_id);
+                    println!("Track n°{} - Codec: {}", track.index(), track.codec());
                 }
             },
         };

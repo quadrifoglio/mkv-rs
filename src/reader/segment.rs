@@ -7,14 +7,34 @@ use elements as el;
 use error::Result;
 
 pub struct Info {
+    timecode_scale: UnsignedInt,
+    uid: Option<Binary>,
+    filename: Option<Utf8>,
+}
+
+impl Info {
+    /// Timestamp scale of the segment in nanoseconds.
+    pub fn timecode_scale(&self) -> u64 {
+        self.timecode_scale
+    }
+
     /// Optional. Unique identifier of the segment.
-    pub uid: Option<Binary>,
+    pub fn uid(&self) -> Option<&[u8]> {
+        if let Some(ref uid) = self.uid {
+            Some(uid.as_slice())
+        } else {
+            None
+        }
+    }
 
     /// Optional. The file name corresponding to the segment.
-    pub filename: Option<Utf8>,
-
-    /// Timestamp scale of the segment in nanoseconds.
-    pub timecode_scale: UnsignedInt,
+    pub fn filename(&self) -> Option<&str> {
+        if let Some(ref filename) = self.filename {
+            Some(filename.as_str())
+        } else {
+            None
+        }
+    }
 }
 
 /// Read matroska segment information. Expected input: children of the `Info` master element.
