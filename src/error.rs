@@ -4,6 +4,10 @@ use std::fmt::Display;
 
 error_chain! {
     errors {
+        UnexpectedEof {
+            description("Unexpected Enf of File")
+        }
+
         ElementNotFound(el: u64) {
             description("Element not found"),
             display("Element '0x{:X}' not found", el)
@@ -24,6 +28,11 @@ error_chain! {
         Io(::std::io::Error);
         Ebml(::ebml::error::Error);
     }
+}
+
+/// Construct an `UnexpectedEof` error.
+pub fn unexpected_eof() -> Error {
+    Error::from(ErrorKind::UnexpectedEof)
 }
 
 /// Construct an `ElementNotFound` error.

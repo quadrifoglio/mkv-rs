@@ -75,6 +75,9 @@ impl<'a, R: Read + 'a> ::std::iter::Iterator for Blocks<'a, R> {
     }
 }
 
+/// Type alias to represent a Frame (basically just binary data).
+pub type Frame = Vec<u8>;
+
 /// Different lacing types available.
 pub enum Lacing {
     None,
@@ -134,6 +137,22 @@ impl Block {
     pub fn data(self) -> Vec<u8> {
         self.data
     }
+
+    /// Return the frames contained in the block. Consumes `self`.
+    pub fn frames(self) -> Result<Vec<Frame>> {
+        match self.lacing {
+            Lacing::None => {
+                let mut frames = Vec::with_capacity(1);
+                frames.push(self.data);
+
+                Ok(frames)
+            },
+
+            Lacing::Xiph => parse_xiph_frames(self.data),
+            Lacing::Ebml => parse_ebml_frames(self.data),
+            Lacing::FixedSize => parse_fixed_size_frames(self.data),
+        }
+    }
 }
 
 fn simple_block(data: Binary) -> Result<Block> {
@@ -192,8 +211,6 @@ fn parse_block(data: Vec<u8>, simple_block_structure: bool) -> Result<Block> {
         wtf => bail!(error::invalid_value(0, wtf)),
     };
 
-    // TODO: Handle lacing data.
-
     let mut data = vec![0u8; data_len];
     cursor.read(&mut data)?;
 
@@ -206,4 +223,97 @@ fn parse_block(data: Vec<u8>, simple_block_structure: bool) -> Result<Block> {
         lacing: lacing,
         data: data,
     })
+}
+
+fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
+    let mut frames = Vec::new();
+    let mut remaining = block.len();
+    let mut cursor = Cursor::new(block);
+
+    // Read the number of frames in the lace. The stored number is actually the number of frames in
+    // the lace minus one.
+    let mut number = vec![0u8; 1];
+    let c = cursor.read(&mut number)?;
+
+    if c == 0 {
+        bail!(error::unexpected_eof())
+    } else {
+        remaining -= c;
+    }
+
+    let number = number[0];
+
+    // Read the sizes of the laced frames. The last frame's size is not coded and is instead
+    // deduced from the block size.
+    let mut sizes = Vec::new();
+
+    for _ in 0..number {
+        let mut size = 0 as usize;
+
+        let mut next = vec![0u8; 1];
+        let c = cursor.read(&mut next)?;
+
+        if c == 0 {
+            bail!(error::unexpected_eof())
+        } else {
+            remaining -= c;
+        }
+
+        // The size is coded as a list of 255's, and terminated by some other byte value. When we
+        // encounter a byte with a value other than 255, it means that the parsing of this size is
+        // done and we can go on to read other sizes, if any.
+        loop {
+            size += next[0] as usize;
+
+            if next[0] == 255 {
+                let c = cursor.read(&mut next)?;
+
+                if c == 0 {
+                    bail!(error::unexpected_eof())
+                } else {
+                    remaining -= c;
+                }
+            } else {
+                break;
+            }
+        }
+
+        sizes.push(size);
+    }
+
+    // Read the actual frames in the lace based on the sizes that we read.
+    for size in sizes {
+        let mut frame = vec![0u8; size];
+        let c = cursor.read(&mut frame)?;
+
+        if c == 0 {
+            bail!(error::unexpected_eof())
+        } else {
+            remaining -= c;
+        }
+
+        frames.push(frame);
+    }
+
+    // Read the last frame in the lace based on the remaining amout of bytes in the block.
+    let mut frame = vec![0u8; remaining];
+    let c = cursor.read(&mut frame)?;
+
+    if c == 0 {
+        bail!(error::unexpected_eof())
+    }
+
+    frames.push(frame);
+
+    Ok(frames)
+}
+
+fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
+    let mut frames = Vec::new();
+    Ok(frames)
+}
+
+fn parse_fixed_size_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
+    let mut frames = Vec::new();
+    Ok(frames)
 }
