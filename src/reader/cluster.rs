@@ -3,8 +3,8 @@
 use std::io::{Cursor, Read};
 
 use ::ebml as libebml;
-use self::libebml::common::types::*;
-use self::libebml::common::ElementArray;
+use self::libebml::types::*;
+use self::libebml::ElementArray;
 
 use elements as el;
 use error::{self, Error, Result};

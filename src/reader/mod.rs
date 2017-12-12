@@ -8,7 +8,7 @@ pub mod cluster;
 use std::io::Read;
 
 use ::ebml as libebml;
-use self::libebml::common::types::*;
+use self::libebml::types::*;
 
 use elements as el;
 use error::{self, Result};

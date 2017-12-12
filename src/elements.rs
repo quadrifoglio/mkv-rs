@@ -1,6 +1,6 @@
 //! Contains all the EBML element definitions for MKV.
 
-use ebml::common::types::UnsignedInt;
+use ebml::types::UnsignedInt;
 
 // Root element.
 

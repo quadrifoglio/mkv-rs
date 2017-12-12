@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-use ebml::common::types::*;
-use ebml::common::ElementArray;
+use ebml::types::*;
+use ebml::ElementArray;
 
 use elements as el;
 use error::{self, Result};
