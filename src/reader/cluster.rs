@@ -291,7 +291,23 @@ fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
 }
 
 fn parse_fixed_size_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
+    let len = data.len();
     let mut frames = Vec::new();
+    let mut cursor = Cursor::new(data);
+
+    let mut number = vec![0u8; 1];
+    try_read(&mut cursor, &mut number)?;
+
+    let number = number[0] as usize;
+    let frame_size = len / number; // Is it really just a division ?!
+
+    for _ in 0..number {
+        let mut frame = vec![0u8; frame_size];
+        try_read(&mut cursor, &mut frame)?;
+
+        frames.push(frame);
+    }
+
     Ok(frames)
 }
 
