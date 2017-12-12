@@ -175,13 +175,13 @@ fn parse_block(data: Vec<u8>, simple_block_structure: bool) -> Result<Block> {
     data_len -= c;
 
     let mut timecode_buf = vec![0u8; 2];
-    let c = cursor.read(&mut timecode_buf)?;
+    let c = try_read(&mut cursor, &mut timecode_buf)?;
     data_len -= c;
 
     let timecode = ((timecode_buf[0] as i16) << 8) | (timecode_buf[1] as i16);
 
     let mut flags = vec![0u8; 1];
-    let c = cursor.read(&mut flags)?;
+    let c = try_read(&mut cursor, &mut flags)?;
     data_len -= c;
 
     let mut keyframe = false;
@@ -233,13 +233,9 @@ fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
     // Read the number of frames in the lace. The stored number is actually the number of frames in
     // the lace minus one.
     let mut number = vec![0u8; 1];
-    let c = cursor.read(&mut number)?;
 
-    if c == 0 {
-        bail!(error::unexpected_eof())
-    } else {
-        remaining -= c;
-    }
+    let c = try_read(&mut cursor, &mut number)?;
+    remaining -= c;
 
     let number = number[0];
 
@@ -251,13 +247,8 @@ fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
         let mut size = 0 as usize;
 
         let mut next = vec![0u8; 1];
-        let c = cursor.read(&mut next)?;
-
-        if c == 0 {
-            bail!(error::unexpected_eof())
-        } else {
-            remaining -= c;
-        }
+        let c = try_read(&mut cursor, &mut next)?;
+        remaining -= c;
 
         // The size is coded as a list of 255's, and terminated by some other byte value. When we
         // encounter a byte with a value other than 255, it means that the parsing of this size is
@@ -266,13 +257,8 @@ fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
             size += next[0] as usize;
 
             if next[0] == 255 {
-                let c = cursor.read(&mut next)?;
-
-                if c == 0 {
-                    bail!(error::unexpected_eof())
-                } else {
-                    remaining -= c;
-                }
+                let c = try_read(&mut cursor, &mut next)?;
+                remaining -= c;
             } else {
                 break;
             }
@@ -284,24 +270,15 @@ fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
     // Read the actual frames in the lace based on the sizes that we read.
     for size in sizes {
         let mut frame = vec![0u8; size];
-        let c = cursor.read(&mut frame)?;
-
-        if c == 0 {
-            bail!(error::unexpected_eof())
-        } else {
-            remaining -= c;
-        }
+        let c = try_read(&mut cursor, &mut frame)?;
+        remaining -= c;
 
         frames.push(frame);
     }
 
     // Read the last frame in the lace based on the remaining amout of bytes in the block.
     let mut frame = vec![0u8; remaining];
-    let c = cursor.read(&mut frame)?;
-
-    if c == 0 {
-        bail!(error::unexpected_eof())
-    }
+    try_read(&mut cursor, &mut frame)?;
 
     frames.push(frame);
 
@@ -316,4 +293,14 @@ fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
 fn parse_fixed_size_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
     let mut frames = Vec::new();
     Ok(frames)
+}
+
+fn try_read<R: Read>(r: &mut R, buf: &mut [u8]) -> Result<usize> {
+    let c = r.read(buf)?;
+
+    if c == 0 {
+        Err(error::unexpected_eof())
+    } else {
+        Ok(c)
+    }
 }
