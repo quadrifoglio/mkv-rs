@@ -287,6 +287,52 @@ fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
 
 fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
     let mut frames = Vec::new();
+    let mut remaining = data.len();
+    let mut cursor = Cursor::new(data);
+
+    // Read the number of frames in the lace. The stored number is actually the number of frames in
+    // the lace minus one.
+    let mut number = vec![0u8; 1];
+
+    let c = try_read(&mut cursor, &mut number)?;
+    remaining -= c;
+
+    let number = number[0];
+
+    // Read the sizes of the laced frames. This first size is coded in EBML VINT format, and the
+    // next ones are encoded as differences from that first size. The last frame's size is not
+    // coded and is instead deduced from the total block size.
+    let mut sizes = Vec::new();
+
+    let (first_size, c) = libebml::reader::read_vint(&mut cursor, true)?;
+    remaining -= c;
+
+    sizes.push(first_size as usize);
+
+    for _ in 0..number - 1 {
+        let mut size = vec![0u8; 1];
+
+        let c = try_read(&mut cursor, &mut size)?;
+        remaining -= c;
+
+        sizes.push(first_size as usize - size[0] as usize);
+    }
+
+    // Read the actual frames in the lace based on the sizes that we read.
+    for size in sizes {
+        let mut frame = vec![0u8; size];
+        let c = try_read(&mut cursor, &mut frame)?;
+        remaining -= c;
+
+        frames.push(frame);
+    }
+
+    // Read the last frame in the lace based on the remaining amout of bytes in the block.
+    let mut frame = vec![0u8; remaining];
+    try_read(&mut cursor, &mut frame)?;
+
+    frames.push(frame);
+
     Ok(frames)
 }
 
