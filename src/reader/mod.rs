@@ -73,7 +73,7 @@ impl<R: Read> Reader<R> {
                         // only supposed to retreive metadata.
 
                         el::CLUSTER => {
-                            let (_, c) = libebml::reader::read_element_data(&mut self.r, size)?;
+                            let (_, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                             self.segment_position += c;
 
                             return self.info();
@@ -93,21 +93,21 @@ impl<R: Read> Reader<R> {
 
             match id {
                 el::SEEK_HEAD => {
-                    let (content, c) = libebml::reader::read_element_data(&mut self.r, size)?;
+                    let (content, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                     self.segment_position += c;
 
                     info.push(Info::MetaSeek(meta_seek::read(content.children()?)?));
                 },
 
                 el::INFO => {
-                    let (content, c) = libebml::reader::read_element_data(&mut self.r, size)?;
+                    let (content, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                     self.segment_position += c;
 
                     info.push(Info::Segment(segment::read(content.children()?)?));
                 },
 
                 el::TRACKS => {
-                    let (content, c) = libebml::reader::read_element_data(&mut self.r, size)?;
+                    let (content, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                     self.segment_position += c;
 
                     info.push(Info::Tracks(track::read(content.children()?)?));
@@ -118,7 +118,7 @@ impl<R: Read> Reader<R> {
 
                 // TODO: Process Chapters, Cues, Attachements and Tags.
                 el::CHAPTERS | el::CUES | el::ATTACHEMENTS | el::TAGS => {
-                    let (_, c) = libebml::reader::read_element_data(&mut self.r, size)?;
+                    let (_, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                     self.segment_position += c;
                 }
 
