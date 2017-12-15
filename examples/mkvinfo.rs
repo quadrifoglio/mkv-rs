@@ -24,7 +24,11 @@ fn main() {
     while let Some(mut cluster) = video.next_cluster().unwrap() {
         for block in cluster.blocks() {
             let block = block.unwrap();
-            println!("Found data block: {} bytes", block.size());
+            println!("Block of size {}", block.size());
+
+            for frame in block.frames().unwrap() {
+                println!("Frame of size {}", frame.len());
+            }
         }
     }
 

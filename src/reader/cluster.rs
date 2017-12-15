@@ -4,7 +4,6 @@ use std::io::{Cursor, Read};
 
 use ::ebml as libebml;
 use self::libebml::types::*;
-use self::libebml::ElementArray;
 
 use elements as el;
 use error::{self, Error, Result};
@@ -56,15 +55,18 @@ impl<'a, R: Read + 'a> ::std::iter::Iterator for Blocks<'a, R> {
             match elem.id() {
                 el::TIMECODE | el::SILENT_TRACKS | el::POSITION | el::PREV_SIZE | el::ENCRYPTED_BLOCK => continue,
 
-                el::SIMPLE_BLOCK => return Some(simple_block(elem.content().into_binary())),
+                el::SIMPLE_BLOCK => return Some(Block::from_binary(elem.content().into_binary())),
 
                 el::BLOCK_GROUP => {
-                    let elems = match elem.content().children() {
+                    let mut elems = match elem.content().children() {
                         Ok(elems) => elems,
                         Err(err) => return Some(Err(Error::from(err))),
                     };
 
-                    return Some(block_group(elems));
+                    return Some(match elems.find(el::BLOCK) {
+                        Some(elem) => Block::from_binary(elem.content().into_binary()),
+                        None => Err(error::not_found(el::BLOCK)),
+                    });
                 },
 
                 wtf => return Some(Err(error::unexpected(el::SIMPLE_BLOCK, wtf))),
@@ -98,6 +100,63 @@ pub struct Block {
 }
 
 impl Block {
+    /// Parse a matroska block from its binary representation.
+    fn from_binary(data: Vec<u8>) -> Result<Block> {
+        let mut data_len = data.len();
+        let mut cursor = Cursor::new(data);
+
+        let (track_number, c) = libebml::reader::read_vint(&mut cursor, true)?;
+        data_len -= c;
+
+        let mut timecode_buf = vec![0u8; 2];
+        let c = try_read(&mut cursor, &mut timecode_buf)?;
+        data_len -= c;
+
+        let timecode = ((timecode_buf[0] as i16) << 8) | (timecode_buf[1] as i16);
+
+        let mut flags = vec![0u8; 1];
+        let c = try_read(&mut cursor, &mut flags)?;
+        data_len -= c;
+
+        let mut keyframe = false;
+        let mut discardable = false;
+        let mut invisible = false;
+
+        if flags[0] & 0x08 != 0 {
+            invisible = true;
+        }
+
+        if flags[0] & 0x80 != 0 {
+            keyframe = true;
+        }
+
+        if flags[0] & 0x01 != 0 {
+            discardable = true;
+        }
+
+        let lacing = match (flags[0] & 0x6) >> 1 {
+            0b00 => Lacing::None,
+            0b01 => Lacing::Xiph,
+            0b11 => Lacing::Ebml,
+            0b10 => Lacing::FixedSize,
+
+            wtf => bail!(error::invalid_value(0, wtf)),
+        };
+
+        let mut data = vec![0u8; data_len];
+        cursor.read(&mut data)?;
+
+        Ok(Block {
+            track_number: track_number as UnsignedInt,
+            timecode: timecode,
+            keyframe: keyframe,
+            invisible: invisible,
+            discardable: discardable,
+            lacing: lacing,
+            data: data,
+        })
+    }
+
     /// Return the index number of the track that the block is associated with.
     pub fn track(&self) -> u64 {
         self.track_number
@@ -153,76 +212,6 @@ impl Block {
             Lacing::FixedSize => parse_fixed_size_frames(self.data),
         }
     }
-}
-
-fn simple_block(data: Binary) -> Result<Block> {
-    parse_block(data, true)
-}
-
-fn block_group(mut elems: ElementArray) -> Result<Block> {
-    let data = elems.find(el::BLOCK)
-        .ok_or(error::not_found(el::BLOCK))?
-        .content().into_binary();
-
-    parse_block(data, false)
-}
-
-fn parse_block(data: Vec<u8>, simple_block_structure: bool) -> Result<Block> {
-    let mut data_len = data.len();
-    let mut cursor = Cursor::new(data);
-
-    let (track_number, c) = libebml::reader::read_vint(&mut cursor, true)?;
-    data_len -= c;
-
-    let mut timecode_buf = vec![0u8; 2];
-    let c = try_read(&mut cursor, &mut timecode_buf)?;
-    data_len -= c;
-
-    let timecode = ((timecode_buf[0] as i16) << 8) | (timecode_buf[1] as i16);
-
-    let mut flags = vec![0u8; 1];
-    let c = try_read(&mut cursor, &mut flags)?;
-    data_len -= c;
-
-    let mut keyframe = false;
-    let mut discardable = false;
-    let mut invisible = false;
-
-    if flags[0] & 0x08 != 0 {
-        invisible = true;
-    }
-
-    if simple_block_structure {
-        if flags[0] & 0x80 != 0 {
-            keyframe = true;
-        }
-
-        if flags[0] & 0x01 != 0 {
-            discardable = true;
-        }
-    }
-
-    let lacing = match (flags[0] & 0x6) >> 1 {
-        0b00 => Lacing::None,
-        0b01 => Lacing::Xiph,
-        0b11 => Lacing::Ebml,
-        0b10 => Lacing::FixedSize,
-
-        wtf => bail!(error::invalid_value(0, wtf)),
-    };
-
-    let mut data = vec![0u8; data_len];
-    cursor.read(&mut data)?;
-
-    Ok(Block {
-        track_number: track_number as UnsignedInt,
-        timecode: timecode,
-        keyframe: keyframe,
-        invisible: invisible,
-        discardable: discardable,
-        lacing: lacing,
-        data: data,
-    })
 }
 
 fn parse_xiph_frames(block: Vec<u8>) -> Result<Vec<Frame>> {
