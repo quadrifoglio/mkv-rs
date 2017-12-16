@@ -120,12 +120,17 @@ impl<R: Read> Reader<R> {
                 el::CHAPTERS | el::CUES | el::ATTACHEMENTS | el::TAGS => {
                     let (_, c) = libebml::reader::read_element_content(&mut self.r, size)?;
                     self.segment_position += c;
-                }
+                },
 
                 // Found the first cluster: information reading is done.
                 el::CLUSTER => {
                     self.queued_element = Some((id, size));
                     break;
+                },
+
+                el::VOID | el::CRC32 => {
+                    let (_, c) = libebml::reader::read_element_content(&mut self.r, size)?;
+                    self.segment_position += c;
                 },
 
                 wtf => bail!(error::unexpected(libebml::header::EBML, wtf)),

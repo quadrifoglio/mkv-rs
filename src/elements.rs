@@ -2,6 +2,11 @@
 
 use ebml::types::UnsignedInt;
 
+// Global elements.
+
+pub const VOID: UnsignedInt = 0xEC;
+pub const CRC32: UnsignedInt = 0xBF;
+
 // Root element.
 
 pub const SEGMENT: UnsignedInt = 0x18538067;
