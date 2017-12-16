@@ -286,7 +286,7 @@ fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
     let c = try_read(&mut cursor, &mut number)?;
     remaining -= c;
 
-    let number = number[0];
+    let number = number[0] as usize;
 
     // Read the sizes of the laced frames. This first size is coded in EBML VINT format, and the
     // next ones are encoded as differences from that first size. The last frame's size is not
@@ -298,18 +298,18 @@ fn parse_ebml_frames(data: Vec<u8>) -> Result<Vec<Frame>> {
 
     sizes.push(first_size as usize);
 
-    for i in 1..number as usize {
-        let (mut diff, c) = libebml::reader::read_vint(&mut cursor, true)?;
+    for i in 1..number {
+        let (diff, c) = libebml::reader::read_vint(&mut cursor, true)?;
         remaining -= c;
 
         // The read VINT is supposed to be unsigned in the usual EBML format, but for this kind of
         // lacing we need to read it as a signed number. I have to idea how this works, but it
         // seems to. Reference:
         // https://lists.matroska.org/pipermail/matroska-users/2011-January/006669.html)
-        diff -= (0b01 << (7 * c - 1)) - 1;
+        let diff = (diff as i64) - ((0b1 << (7 * c - 1)) - 1 as i64);
 
-        let prev_size = sizes[i - 1];
-        sizes.push((prev_size as i64 + diff as i64) as usize);
+        let prev_size = sizes[i - 1] as i64;
+        sizes.push((prev_size + diff) as usize);
     }
 
     // Read the actual frames in the lace based on the sizes that we read.
